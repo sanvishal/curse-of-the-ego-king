@@ -19,6 +19,8 @@ export const addSlime = ({ x, y }) => {
       pushBack: false,
       pushBackDir: 0,
       pushBackTimer: 40,
+      xscale: 1,
+      yscale: 1,
     },
     {
       update: (e) => {
@@ -50,6 +52,10 @@ export const addSlime = ({ x, y }) => {
         } else {
           e.flipX(false);
         }
+
+        e.xscale = lerp(e.xscale, 1, 0.1);
+        e.yscale = lerp(e.yscale, 1, 0.1);
+        e.use(scale(vec2(e.xscale, e.yscale)));
 
         e.pos.x = clamp(
           e.pos.x,

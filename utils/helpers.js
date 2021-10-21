@@ -1,3 +1,5 @@
+import { roomHeight, roomWidth, uiOffset } from "./constants.js";
+
 export function pointDirection(x1, y1, x2, y2) {
   return (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI;
 }
@@ -50,4 +52,11 @@ export function rLerp(A, B, w) {
   let CS = (1 - w) * Math.cos(A) + w * Math.cos(B);
   let SN = (1 - w) * Math.sin(A) + w * Math.sin(B);
   return Math.atan2(SN, CS);
+}
+
+export function getActualCenter() {
+  return vec2(
+    roomWidth / 2 + uiOffset / 2,
+    roomHeight / 2 + uiOffset - uiOffset / 4
+  );
 }

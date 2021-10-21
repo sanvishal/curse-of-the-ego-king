@@ -70,5 +70,11 @@ export const loadResources = () => {
         loop: { from: 0, to: 4, loop: true, speed: 20 },
       },
     },
+    sprSkeleHead: {
+      x: 1,
+      y: 50,
+      width: 10,
+      height: 9,
+    },
   });
 };

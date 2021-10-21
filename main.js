@@ -11,10 +11,16 @@ import { addHead } from "./entities/head.js";
 import { addChargerLine } from "./entities/charger.js";
 import { addHittable } from "./entities/hittable.js";
 import { loadResources } from "./loadResources.js";
-import { maxHealth, uiOffset } from "./utils/constants.js";
+import {
+  maxHealth,
+  roomHeight,
+  roomWidth,
+  uiOffset,
+} from "./utils/constants.js";
 import { addSlime } from "./entities/enemies/slime.js";
 import { addSingleHealth } from "./entities/ui/health.js";
 import { addHealthManager } from "./entities/ui/healthManager.js";
+import { addSkeleHead } from "./entities/enemies/skeleHead.js";
 
 // general constants
 let shootRadius = 40;
@@ -44,7 +50,12 @@ let head = addHead();
 let player = addPlayer();
 let { _, charger } = addChargerLine();
 
-console.log(addSlime({ x: 200, y: 200 }));
+console.log(
+  addSkeleHead({
+    x: roomWidth / 2 + uiOffset / 2,
+    y: roomHeight / 2 + uiOffset - uiOffset / 4,
+  })
+);
 
 healthManager.healthArray.forEach((health, i) => {
   healthBar.push(
@@ -79,6 +90,9 @@ head.collides("hitBox", (a) => {
     a.parent.pushBackDir = head.dir;
     // how much speed to push?
     a.parent.spd = mapc(head.spd * 3, 0, 70, 1.4, 1.6);
+    // glub
+    a.parent.xscale = 1.5;
+    a.parent.yscale = 1.5;
     if (Math.abs(head.hspd) > Math.abs(head.vspd)) {
       head.hspd = -head.hspd;
     } else {
@@ -87,6 +101,10 @@ head.collides("hitBox", (a) => {
   } else {
     head.spd *= 0.8;
   }
+});
+
+collides("skeleHead", "wall", (a) => {
+  a.hspd = -a.hspd;
 });
 
 const updateHealthBar = () => {
