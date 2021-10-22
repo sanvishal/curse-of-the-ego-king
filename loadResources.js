@@ -41,11 +41,10 @@ export const loadResources = () => {
       },
     },
     sprHeart: {
-      x: 0,
-      y: 39,
+      x: 2,
+      y: 40,
       height: 10,
-      width: 11 * 2,
-      sliceX: 2,
+      width: 10,
     },
     sprDust: {
       x: 23,
@@ -72,9 +71,25 @@ export const loadResources = () => {
     },
     sprSkeleHead: {
       x: 1,
-      y: 50,
+      y: 51,
       width: 10,
       height: 9,
+    },
+    sprFireball: {
+      x: 162,
+      y: 41,
+      width: 7,
+      height: 7,
+    },
+    sprProjPoof: {
+      x: 170,
+      y: 41,
+      width: 7 * 2,
+      height: 7,
+      sliceX: 2,
+      anims: {
+        poof: { from: 0, to: 1, speed: 8 },
+      },
     },
   });
 };

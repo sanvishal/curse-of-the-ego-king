@@ -21,6 +21,8 @@ import { addSlime } from "./entities/enemies/slime.js";
 import { addSingleHealth } from "./entities/ui/health.js";
 import { addHealthManager } from "./entities/ui/healthManager.js";
 import { addSkeleHead } from "./entities/enemies/skeleHead.js";
+import { addPoof } from "./entities/poof.js";
+import { addHitLines } from "./entities/ui/hitLines.js";
 
 // general constants
 let shootRadius = 40;
@@ -57,6 +59,11 @@ console.log(
   })
 );
 
+addSlime({
+  x: roomWidth / 2 + uiOffset / 2,
+  y: roomHeight / 2 + uiOffset - uiOffset / 4,
+});
+
 healthManager.healthArray.forEach((health, i) => {
   healthBar.push(
     addSingleHealth({
@@ -73,14 +80,35 @@ head.collides("wall", (a, b) => {
   shake(0.5);
   if (a.dir === "topdown") {
     head.vspd = -head.vspd;
-    head.spd /= 2;
+    head.spd /= 1.6;
+    head.hitWall = true;
   } else if (a.dir === "leftright") {
     head.hspd = -head.hspd;
-    head.spd /= 2;
+    head.spd /= 1.6;
+    head.hitWall = true;
   }
 });
 
+collides("wall", "corpse", (a, b) => {
+  b.spd = 0;
+  b.hspd = 0;
+  b.vspd = 0;
+});
+
+function sleep(k) {
+  // let t = new Date().valueOf() + k;
+  // while (new Date().valueOf() < t) {}
+  debug.paused = true;
+  setTimeout(() => {
+    debug.paused = false;
+  }, k);
+}
+
 head.collides("hitBox", (a) => {
+  if (head.spd >= 0 && head.spd <= 10) {
+    head.spd /= 3;
+    return;
+  }
   if (head.spd <= 70 && head.spd >= 10) {
     // reduce head speed
     head.spd /= 3;
@@ -93,32 +121,63 @@ head.collides("hitBox", (a) => {
     // glub
     a.parent.xscale = 1.5;
     a.parent.yscale = 1.5;
+    // hurt em
+    a.parent.hurt();
     if (Math.abs(head.hspd) > Math.abs(head.vspd)) {
       head.hspd = -head.hspd;
     } else {
       head.vspd = -head.vspd;
     }
-  } else {
-    head.spd *= 0.8;
+    return;
+  }
+  if (head.spd >= 70) {
+    addHitLines({ x: head.pos.x, y: head.pos.y });
+    sleep(50);
+    shake(1);
+    if (!head.hitWall) {
+      head.spd /= 1.3;
+    } else {
+      head.spd *= 1.3;
+    }
+    a.parent.pushBack = true;
+    a.parent.pushBackDir = head.dir;
+    a.parent.spd = mapc(head.spd * 3, 0, 70, 1.4, 1.6);
+    a.parent.xscale = 1.5;
+    a.parent.yscale = 1.5;
+    a.parent.hurt({ dieWithPassion: true });
+    a.parent.health -= 5;
+    return;
   }
 });
 
-collides("skeleHead", "wall", (a) => {
-  a.hspd = -a.hspd;
+head.collides("projectile", (a) => {
+  addPoof({ x: a.pos.x, y: a.pos.y });
+  destroy(a);
 });
-
-const updateHealthBar = () => {
-  healthManager.healthArray.forEach((health, idx) => {
-    healthBar[idx].toggle(health);
-  });
-};
 
 player.collides("enemy", () => {
   if (player.invincibleTimer === 0) {
     player.hurt();
     healthManager.decreaseHealth(1);
-    updateHealthBar();
+    healthManager.trigger("updateHealthBar");
   }
+});
+
+player.collides("projectile", (a) => {
+  let pos = a.pos;
+  destroy(a);
+  if (player.invincibleTimer === 0) {
+    addPoof({ x: pos.x, y: pos.y });
+    player.hurt();
+    healthManager.decreaseHealth(1);
+    healthManager.trigger("updateHealthBar");
+  }
+});
+
+healthManager.on("updateHealthBar", () => {
+  healthManager.healthArray.forEach((health, idx) => {
+    healthBar[idx].toggle(health);
+  });
 });
 
 // power up charger for kick

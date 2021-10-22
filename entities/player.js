@@ -16,6 +16,7 @@ import {
 } from "../utils/helpers.js";
 import { addDust } from "./dust.js";
 import { getHead } from "./head.js";
+import { getHealthManager } from "./ui/healthManager.js";
 
 export const addPlayer = () => {
   let head = getHead();
@@ -25,6 +26,23 @@ export const addPlayer = () => {
     origin("center"),
     pos(center()),
     opacity(0),
+    { xscale: 1, yscale: 1 },
+    {
+      update: (e) => {
+        e.xscale = lerp(e.xscale, 1, 0.02);
+        e.yscale = lerp(e.yscale, 1, 0.1);
+        e.use(scale(vec2(e.xscale, e.yscale)));
+
+        if (
+          (e.xscale > 1 && e.xscale - 1 >= 0.1) ||
+          (e.yscale > 1 && e.yscale - 1 >= 0.1)
+        ) {
+          e.use(color(200, 0, 5));
+        } else {
+          e.unuse("color");
+        }
+      },
+    },
   ]);
 
   let player = add([
@@ -55,6 +73,7 @@ export const addPlayer = () => {
       ang: 0,
       walkTimer: 0,
       activateRing: false,
+      awayTimer: 0,
     },
     {
       update: (e) => {
@@ -159,6 +178,22 @@ export const addPlayer = () => {
         e.playerDeltaX.shift();
         e.playerDeltaY.push(e.pos.y);
         e.playerDeltaY.shift();
+
+        if (e.pos.dist(head.pos) > head.aoe) {
+          e.awayTimer += 1;
+          e.activateRing = true;
+          if (e.awayTimer % 260 === 0) {
+            let hm = getHealthManager();
+            e.hurt();
+            hm.decreaseHealth(1);
+            hm.trigger("updateHealthBar");
+            ring.xscale = 1.5;
+            ring.yscale = 1.5;
+          }
+        } else {
+          e.awayTimer = 0;
+          e.activateRing = false;
+        }
 
         ring.pos = vec2(e.pos.x, e.pos.y + 8);
         if (e.activateRing) {

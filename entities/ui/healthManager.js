@@ -44,3 +44,7 @@ export const addHealthManager = () => {
 
   return mgr;
 };
+
+export const getHealthManager = () => {
+  return get("healthManager")?.[0];
+};

@@ -1,12 +1,16 @@
 import { roomHeight, roomWidth, uiOffset } from "../../utils/constants.js";
 import { clamp, lengthdir_x, lengthdir_y, rLerp } from "../../utils/helpers.js";
+import { addCorpse } from "../corpse.js";
+import { getHead } from "../head.js";
 import { addHittable } from "../hittable.js";
 import { getPlayer } from "../player.js";
 
 export const addSlime = ({ x, y }) => {
   let player = getPlayer();
+  let head = getHead();
+  let spr = choose(["sprSlime1", "sprSlime2"]);
   let slime = add([
-    sprite(choose(["sprSlime1", "sprSlime2"]), { anim: "slime" }),
+    sprite(spr, { anim: "slime" }),
     pos(x, y),
     { hitBox: null },
     origin("center"),
@@ -21,6 +25,10 @@ export const addSlime = ({ x, y }) => {
       pushBackTimer: 40,
       xscale: 1,
       yscale: 1,
+      health: 2,
+      isHurt: false,
+      hurtFrame: 10,
+      dieWithPassion: false,
     },
     {
       update: (e) => {
@@ -53,6 +61,23 @@ export const addSlime = ({ x, y }) => {
           e.flipX(false);
         }
 
+        if (e.isHurt) {
+          if (e.hurtFrame === 10) {
+            e.health -= 1;
+          }
+          e.hurtFrame -= 1;
+          e.use(color(200, 0, 0));
+          if (e.hurtFrame <= 0) {
+            e.hurtFrame = 10;
+            e.isHurt = false;
+            e.unuse("color");
+          }
+        }
+
+        if (e.health <= 0) {
+          e.die(e?.dieWithPassion);
+        }
+
         e.xscale = lerp(e.xscale, 1, 0.1);
         e.yscale = lerp(e.yscale, 1, 0.1);
         e.use(scale(vec2(e.xscale, e.yscale)));
@@ -67,6 +92,25 @@ export const addSlime = ({ x, y }) => {
           e.width / 2 + uiOffset / 2 + 15,
           roomHeight - e.height / 2 + uiOffset / 4 + 4
         );
+      },
+      hurt: (die) => {
+        slime.isHurt = true;
+        slime.dieWithPassion = die?.dieWithPassion;
+      },
+      die: () => {
+        addCorpse({
+          x: slime.pos.x,
+          y: slime.pos.y,
+          dir: slime.pushBackDir,
+          spd: head.spd * 4,
+          poofSize: vec2(slime.width, slime.height),
+          spr,
+          dieWithPassion: slime.dieWithPassion,
+        });
+        if (slime.hitBox) {
+          destroy(slime.hitBox);
+        }
+        destroy(slime);
       },
     },
   ]);

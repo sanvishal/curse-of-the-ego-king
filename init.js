@@ -27,7 +27,7 @@ export const initKaboom = () => {
     canvas: document.querySelector("#canvas"),
   });
 
-  layers(["bg", "dust", "game", "ui"], "game");
+  layers(["bg", "corpse", "dust", "game", "ui"], "game");
 
   return k;
 };

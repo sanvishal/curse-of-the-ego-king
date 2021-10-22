@@ -1,5 +1,14 @@
-import { clamp, floor, lengthdir_x, lengthdir_y } from "../utils/helpers.js";
+import { roomHeight } from "../utils/constants.js";
+import {
+  clamp,
+  cos,
+  floor,
+  lengthdir_x,
+  lengthdir_y,
+  sin,
+} from "../utils/helpers.js";
 import { addDust } from "./dust.js";
+import { getPlayer } from "./player.js";
 
 export const addHead = () => {
   let head = add([
@@ -23,6 +32,8 @@ export const addHead = () => {
       headDeltaX: [0, 0],
       headDeltaY: [0, 0],
       rot: 0,
+      aoe: roomHeight / 2 - 50,
+      hitWall: false,
     },
     {
       update: (e) => {
@@ -43,6 +54,10 @@ export const addHead = () => {
         e.headDeltaX.shift();
         e.headDeltaY.push(e.pos.y);
         e.headDeltaY.shift();
+
+        if (e.spd <= 50) {
+          e.hitWall = false;
+        }
 
         e.rot += e.spd / 4;
         e.rot = e.rot % 360;
@@ -80,9 +95,28 @@ export const addHead = () => {
         head.hspd = 0;
         head.vspd = 0;
       },
+      draw: () => {
+        let steps = 0.06;
+        let player = getPlayer();
+        let dist = player.pos.dist(head.pos);
+        for (let i = 0; i < Math.PI * 2; i += steps) {
+          pushTransform();
+          pushTranslate(
+            head.pos.x + cos(i) * head.aoe,
+            head.pos.y + sin(i) * head.aoe
+          );
+          drawCircle({
+            radius: 0.8,
+            origin: "center",
+            // color: rgb(0, wave(150, 255, time()), wave(150, 255, time())),
+            opacity: dist > head.aoe ? 0.8 : 0.4,
+          });
+          popTransform();
+        }
+      },
     },
   ]);
-  console.log(head.numFrames());
+
   return head;
 };
 
