@@ -55,8 +55,8 @@ export function rLerp(A, B, w) {
 }
 
 export function getActualCenter() {
-  return vec2(
-    roomWidth / 2 + uiOffset / 2,
-    roomHeight / 2 + uiOffset - uiOffset / 4
-  );
+  return {
+    x: roomWidth / 2 + uiOffset / 2,
+    y: roomHeight / 2 + uiOffset - uiOffset / 4,
+  };
 }

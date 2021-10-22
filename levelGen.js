@@ -21,42 +21,51 @@ for (let i = 0; i < roomWidth / 16; i += 1) {
 }
 
 export const generateLevel = () => {
-  addLevel(level, {
-    width: 16,
-    height: 16,
-    w: (c) => {
-      if (c.y === 0 || c.y === floor(roomHeight / 16) - 1) {
-        return [
-          "wall",
-          opacity(0),
-          rect(16, 16),
-          area(),
-          solid(),
-          origin("center"),
-          pos(
-            8 + uiOffset / 2,
-            8 + uiOffset + (floor(roomHeight / 16) - 1 === c.y ? -4 : -6)
-          ),
-          { dir: "topdown" },
-        ];
-      }
-      if (c.x === 0 || c.x === floor(roomWidth / 16) - 1) {
-        return [
-          "wall",
-          opacity(0),
-          rect(16, 16),
-          area(),
-          solid(),
-          origin("center"),
-          pos(
-            8 + uiOffset / 2 + (floor(roomWidth / 16) - 1 === c.x ? 4 : -4),
-            8 + uiOffset / 2 + 11
-          ),
-          { dir: "leftright" },
-        ];
-      }
-    },
-  });
+  let op = 0;
+  add([
+    "wall",
+    opacity(op),
+    color(255, 0, 0),
+    rect(roomWidth, 16),
+    pos(uiOffset / 2, 8 + uiOffset - 6),
+    area(),
+    solid(),
+    origin("left"),
+    { dir: "topdown" },
+  ]);
+  add([
+    "wall",
+    opacity(op),
+    color(255, 0, 0),
+    rect(roomWidth, 16),
+    pos(uiOffset / 2, roomHeight + 8 + uiOffset / 2 - 4),
+    area(),
+    solid(),
+    origin("left"),
+    { dir: "topdown" },
+  ]);
+  add([
+    "wall",
+    opacity(op),
+    color(255, 0, 0),
+    rect(16, roomHeight),
+    pos(8 + uiOffset / 2 - 4, 8 + uiOffset / 2),
+    area(),
+    solid(),
+    origin("top"),
+    { dir: "leftright" },
+  ]);
+  add([
+    "wall",
+    opacity(op),
+    color(255, 0, 0),
+    rect(16, roomHeight),
+    pos(roomWidth + uiOffset / 2 - 4, 8 + uiOffset / 2),
+    area(),
+    solid(),
+    origin("top"),
+    { dir: "leftright" },
+  ]);
 };
 
 export const levelMap = level;

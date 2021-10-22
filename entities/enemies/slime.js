@@ -1,13 +1,17 @@
+import { getGameManager } from "../../gameManager.js";
 import { roomHeight, roomWidth, uiOffset } from "../../utils/constants.js";
 import { clamp, lengthdir_x, lengthdir_y, rLerp } from "../../utils/helpers.js";
 import { addCorpse } from "../corpse.js";
+import { addDust } from "../dust.js";
 import { getHead } from "../head.js";
 import { addHittable } from "../hittable.js";
 import { getPlayer } from "../player.js";
+import { addScoreBubble } from "../scoreBubble.js";
 
 export const addSlime = ({ x, y }) => {
   let player = getPlayer();
   let head = getHead();
+  let gm = getGameManager();
   let spr = choose(["sprSlime1", "sprSlime2"]);
   let slime = add([
     sprite(spr, { anim: "slime" }),
@@ -29,8 +33,21 @@ export const addSlime = ({ x, y }) => {
       isHurt: false,
       hurtFrame: 10,
       dieWithPassion: false,
+      baseScore: 15,
+      playing: false,
     },
     {
+      add: () => {
+        for (let i = 0; i < 6; i++) {
+          addDust({
+            x: x + rand(-10, 10),
+            y: y + rand(-10, 10),
+            isSpawn: true,
+            dir: -90,
+            spd: 15,
+          });
+        }
+      },
       update: (e) => {
         e.spd -= e.fric;
         e.spd = clamp(e.spd, 0.3, 200);
@@ -41,8 +58,8 @@ export const addSlime = ({ x, y }) => {
         );
         e.hspd = lengthdir_x(e.spd, e.dir);
         e.vspd = lengthdir_y(e.spd, e.dir);
-        e.pos.x += e.hspd;
-        e.pos.y += e.vspd;
+        e.pos.x += e.hspd * e.playing;
+        e.pos.y += e.vspd * e.playing;
 
         if (e.pushBack) {
           e.pushBackTimer -= 1;
@@ -107,6 +124,22 @@ export const addSlime = ({ x, y }) => {
           spr,
           dieWithPassion: slime.dieWithPassion,
         });
+        let score = slime.baseScore;
+        if (head.hitWall) {
+          score += 10;
+        }
+        if (slime.dieWithPassion) {
+          score += 5;
+        }
+        if (slime.dieWithPassion && head.hitWall) {
+          score += 15;
+        }
+        addScoreBubble({
+          x: head.pos.x,
+          y: head.pos.y,
+          amount: score,
+        });
+        gm.increaseScore(score);
         if (slime.hitBox) {
           destroy(slime.hitBox);
         }

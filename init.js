@@ -1,9 +1,9 @@
 import { roomHeight, roomWidth } from "../utils/constants.js";
 import { uiOffset } from "./utils/constants.js";
 
-const getScale = () => {
+const getScale = (maxScale = 4) => {
   let scale = 1;
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < maxScale; i++) {
     if (
       (roomHeight + uiOffset) * i <= window.innerHeight &&
       (roomWidth + uiOffset) * i <= window.innerWidth
@@ -27,7 +27,7 @@ export const initKaboom = () => {
     canvas: document.querySelector("#canvas"),
   });
 
-  layers(["bg", "corpse", "dust", "game", "ui"], "game");
+  layers(["bg", "corpse", "dust", "game", "ui", "uiOverlay"], "game");
 
   return k;
 };

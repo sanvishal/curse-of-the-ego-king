@@ -1,3 +1,4 @@
+import { getGameManager } from "../../gameManager.js";
 import { roomHeight, roomWidth, uiOffset } from "../../utils/constants.js";
 import {
   clamp,
@@ -14,10 +15,12 @@ import { addFireball } from "../fireball.js";
 import { getHead } from "../head.js";
 import { addHittable } from "../hittable.js";
 import { getPlayer } from "../player.js";
+import { addScoreBubble } from "../scoreBubble.js";
 
 export const addSkeleHead = ({ x, y }) => {
   let head = getHead();
   let player = getPlayer();
+  let gm = getGameManager();
 
   let skeleHead = add([
     sprite("sprSkeleHead"),
@@ -45,8 +48,21 @@ export const addSkeleHead = ({ x, y }) => {
       shootFireballTimer: 300,
       maxShootTimer: 300,
       dieWithPassion: false,
+      baseScore: 25,
+      playing: true,
     },
     {
+      add: () => {
+        for (let i = 0; i < 6; i++) {
+          addDust({
+            x: getActualCenter().x + cos(time() / 2) * 50 + rand(-5, 5),
+            y: getActualCenter().y + sin(time() / 2) + rand(-5, 5),
+            isSpawn: true,
+            dir: -90,
+            spd: 12,
+          });
+        }
+      },
       update: (e) => {
         e.spd -= e.fric;
         e.spd = clamp(e.spd, 4, 200);
@@ -54,8 +70,8 @@ export const addSkeleHead = ({ x, y }) => {
         e.dir = rad2deg(rLerp(deg2rad(e.dir), deg2rad(dir), 0.03));
         e.hspd = lengthdir_x(e.spd, 0);
         e.vspd = lengthdir_y(e.spd, 0);
-        e.pos.x = getActualCenter().x + cos(time() / 2) * 50;
-        e.pos.y = getActualCenter().y + sin(time() / 2) * 50;
+        e.pos.x = getActualCenter().x + cos((time() / 2) * e.playing) * 50;
+        e.pos.y = getActualCenter().y + sin((time() / 2) * e.playing) * 50;
 
         if (Math.random() < 0.2) {
           addDust({ x: e.pos.x + rand(-3, 3), y: e.pos.y + rand(-3, 3) }).use(
@@ -77,7 +93,7 @@ export const addSkeleHead = ({ x, y }) => {
           }
         }
 
-        e.shootFireballTimer -= 1;
+        e.shootFireballTimer -= 1 * e.playing;
         if (e.shootFireballTimer <= 0) {
           if (e.shootFireballTimer === 0) {
             e.xscale = 1.3;
@@ -139,6 +155,22 @@ export const addSkeleHead = ({ x, y }) => {
           spr: "sprSkeleHead",
           dieWithPassion: skeleHead.dieWithPassion,
         });
+        let score = skeleHead.baseScore;
+        if (head.hitWall) {
+          score += 10;
+        }
+        if (skeleHead.dieWithPassion) {
+          score += 5;
+        }
+        if (skeleHead.dieWithPassion && head.hitWall) {
+          score += 15;
+        }
+        addScoreBubble({
+          x: head.pos.x,
+          y: head.pos.y,
+          amount: score,
+        });
+        gm.increaseScore(score);
         if (skeleHead.hitBox) {
           destroy(skeleHead.hitBox);
         }

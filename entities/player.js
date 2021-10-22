@@ -10,6 +10,7 @@ import {
   approach,
   clamp,
   floor,
+  getActualCenter,
   lengthdir_x,
   lengthdir_y,
   minkDiff,
@@ -49,8 +50,8 @@ export const addPlayer = () => {
     // rect(16, 16),
     sprite("sprEgoKing", { anim: "idle" }),
     pos({
-      x: center().x + lengthdir_x(100, rand(0, 360)),
-      y: center().y + lengthdir_y(100, rand(0, 360)),
+      x: getActualCenter().x,
+      y: getActualCenter().y + 13,
     }),
     "player",
     layer("game"),
@@ -63,8 +64,6 @@ export const addPlayer = () => {
       spd: 1,
       playerDeltaX: [0, 0],
       playerDeltaY: [0, 0],
-      health: maxHealth,
-      maxHealth: maxHealth,
       isHurt: false,
       invincibleTimer: 0,
       invincibleTime: 70,
@@ -74,6 +73,8 @@ export const addPlayer = () => {
       walkTimer: 0,
       activateRing: false,
       awayTimer: 0,
+      playing: true,
+      isDead: false,
     },
     {
       update: (e) => {
@@ -140,7 +141,9 @@ export const addPlayer = () => {
               }
             })();
 
-            e.pos = e.pos.add(res);
+            if (player.playing) {
+              e.pos = e.pos.add(res);
+            }
           }
         }
 
@@ -160,8 +163,8 @@ export const addPlayer = () => {
           e.unuse("color");
         }
 
-        e.pos.x += e.spd * horizontal * diag;
-        e.pos.y += e.spd * vertical * diag;
+        e.pos.x += e.spd * horizontal * diag * e.playing;
+        e.pos.y += e.spd * vertical * diag * e.playing;
 
         e.pos.x = clamp(
           e.pos.x,
@@ -179,7 +182,7 @@ export const addPlayer = () => {
         e.playerDeltaY.push(e.pos.y);
         e.playerDeltaY.shift();
 
-        if (e.pos.dist(head.pos) > head.aoe) {
+        if (e.pos.dist(head.pos) > head.aoe && player.playing) {
           e.awayTimer += 1;
           e.activateRing = true;
           if (e.awayTimer % 260 === 0) {
@@ -233,7 +236,9 @@ export const addPlayer = () => {
         }
       },
       hurt: (enemy) => {
-        player.isHurt = true;
+        if (player.playing) {
+          player.isHurt = true;
+        }
       },
     },
   ]);

@@ -3,6 +3,7 @@ import {
   clamp,
   cos,
   floor,
+  getActualCenter,
   lengthdir_x,
   lengthdir_y,
   sin,
@@ -11,13 +12,14 @@ import { addDust } from "./dust.js";
 import { getPlayer } from "./player.js";
 
 export const addHead = () => {
+  let player = null;
   let head = add([
     // rect(20, 20),
     sprite("sprHead"),
-    pos(center()),
+    pos(getActualCenter()),
     origin("center"),
     layer("game"),
-    area(),
+    area({ shape: "circle" }),
     outline({ width: 2, color: rgb(255, 0, 0) }),
     solid(),
     // color(255, 0, 255),
@@ -34,6 +36,7 @@ export const addHead = () => {
       rot: 0,
       aoe: roomHeight / 2 - 50,
       hitWall: false,
+      playing: true,
     },
     {
       update: (e) => {
@@ -87,8 +90,10 @@ export const addHead = () => {
         }
       },
       shoot: (dir, power) => {
-        head.dir = dir;
-        head.spd = power;
+        if (head.playing) {
+          head.dir = dir;
+          head.spd = power;
+        }
       },
       resetSpeed: () => {
         head.spd = 0;
@@ -96,22 +101,34 @@ export const addHead = () => {
         head.vspd = 0;
       },
       draw: () => {
-        let steps = 0.06;
-        let player = getPlayer();
-        let dist = player.pos.dist(head.pos);
-        for (let i = 0; i < Math.PI * 2; i += steps) {
-          pushTransform();
-          pushTranslate(
-            head.pos.x + cos(i) * head.aoe,
-            head.pos.y + sin(i) * head.aoe
-          );
-          drawCircle({
-            radius: 0.8,
-            origin: "center",
-            // color: rgb(0, wave(150, 255, time()), wave(150, 255, time())),
-            opacity: dist > head.aoe ? 0.8 : 0.4,
-          });
-          popTransform();
+        let steps = 0.1;
+        if (!player) {
+          player = getPlayer();
+        }
+        if (player) {
+          let color;
+          let dist = player.pos.dist(head.pos);
+          if (player.isHurt) {
+            if (player.invincibleTimer % 10 <= 5 && dist > head.aoe) {
+              color = rgb(195, 0, 0);
+            } else {
+              color = rgb(255, 255, 255);
+            }
+          }
+          for (let i = 0; i < Math.PI * 2; i += steps) {
+            pushTransform();
+            pushTranslate(
+              head.pos.x + cos(i + time() / 20) * head.aoe,
+              head.pos.y + sin(i + time() / 20) * head.aoe
+            );
+            drawCircle({
+              radius: 0.8,
+              origin: "center",
+              color,
+              opacity: dist > head.aoe ? 0.8 : 0.4,
+            });
+            popTransform();
+          }
         }
       },
     },

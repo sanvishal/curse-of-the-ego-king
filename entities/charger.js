@@ -5,20 +5,27 @@ import { getPlayer } from "./player.js";
 export const addChargerLine = () => {
   let head = getHead();
   let player = getPlayer();
-  let maxCharge = 50;
+  let maxCharge = 40;
 
   let chargeLine = add([
     rect(maxCharge, 2),
     pos(head.pos),
     "chargerBG",
     layer("game"),
-    opacity(0.2),
+    opacity(0.6),
     {
       update: (e) => {
         let angle = head.pos.angle(player.pos);
         e.angle = angle;
         e.pos.x = head.pos.x + lengthdir_x(head.width / 2, angle);
         e.pos.y = head.pos.y + lengthdir_y(head.height / 2, angle);
+
+        let dist = head.pos.dist(player.pos);
+        if (dist < 40) {
+          e.use(opacity(0.6));
+        } else {
+          e.use(opacity(0));
+        }
       },
     },
   ]);
@@ -36,6 +43,12 @@ export const addChargerLine = () => {
         e.angle = angle;
         e.pos.x = head.pos.x + lengthdir_x(head.width / 2, angle);
         e.pos.y = head.pos.y + lengthdir_y(head.height / 2, angle);
+        let dist = head.pos.dist(player.pos);
+        if (dist < 40) {
+          e.use(opacity(0.6));
+        } else {
+          e.use(opacity(0));
+        }
         if (c) {
           e.width = e.charge;
         } else {
