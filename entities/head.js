@@ -37,6 +37,7 @@ export const addHead = () => {
       aoe: roomHeight / 2 - 50,
       hitWall: false,
       playing: true,
+      damagesPlayer: false,
     },
     {
       update: (e) => {
@@ -62,6 +63,12 @@ export const addHead = () => {
           e.hitWall = false;
         }
 
+        if (e.damagesPlayer) {
+          e.use(color(213, 60, 106));
+        } else {
+          e.unuse("color");
+        }
+
         e.rot += e.spd / 4;
         e.rot = e.rot % 360;
         if (floor(mapc(e.spd, 0, 100, 0, 2)) === 0) {
@@ -83,7 +90,7 @@ export const addHead = () => {
               dir: rand(dir, -dir),
               spd: rand(1, 7),
             });
-            if (Math.random() < 0.2) {
+            if (Math.random() < (e.damagesPlayer ? 0.6 : 0.2)) {
               d.use(color(213, 60, 106));
             }
           }

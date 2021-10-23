@@ -15,8 +15,6 @@ const getScale = (maxScale = 4) => {
   return scale;
 };
 
-console.log(getScale());
-
 export const initKaboom = () => {
   let k = kaboom({
     width: roomWidth + uiOffset,

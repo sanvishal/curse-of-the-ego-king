@@ -194,6 +194,7 @@ scene("game", () => {
     });
     if (healthManager.health <= 0) {
       player.isDead = true;
+      gm.playerIsDead = true;
       addHitLines({ x: player.pos.x, y: player.pos.y, n: 11 });
       for (let i = 0; i < 10; i++) {
         addDust({
@@ -224,6 +225,7 @@ scene("game", () => {
       gameOverScreen.fadeIn();
     }
   });
+  gameOverScreen.fadeIn();
 
   // power up charger for kick
   keyDown("z", () => {
@@ -249,6 +251,10 @@ scene("game", () => {
     head.resetSpeed();
     go("game");
   });
+
+  keyPress("f", (c) => {
+    fullscreen(!isFullscreen());
+  });
 });
 
 go("game");
@@ -258,8 +264,4 @@ ready(() => {
   if (!focused()) {
     focus();
   }
-});
-
-keyPress("f", (c) => {
-  fullscreen(!isFullscreen());
 });

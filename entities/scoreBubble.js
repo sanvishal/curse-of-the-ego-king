@@ -1,6 +1,6 @@
 export const addScoreBubble = ({ x, y, amount }) => {
   let score = add([
-    text(String(amount), { font: "sink", size: 5 }),
+    text(String(amount), { font: "sink", size: 7 }),
     pos(x, y),
     { timer: 0, rot: 0 },
     {
@@ -21,7 +21,6 @@ export const addScoreBubble = ({ x, y, amount }) => {
     },
     origin("center"),
   ]);
-  console.log(score);
 
   return score;
 };

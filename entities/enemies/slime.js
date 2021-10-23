@@ -134,6 +134,10 @@ export const addSlime = ({ x, y }) => {
         if (slime.dieWithPassion && head.hitWall) {
           score += 15;
         }
+        score = score * gm.combo;
+        gm.combo++;
+        gm.comboCoolDown = gm.maxCoolDown;
+        gm.triggerCombo = true;
         addScoreBubble({
           x: head.pos.x,
           y: head.pos.y,

@@ -32,11 +32,20 @@ export const addGameOverScreen = () => {
             getActualCenter().x,
             getActualCenter().y - goScreen.textTargY
           );
+          let text = "you died again";
           drawText({
-            text: "you did not escape",
+            text,
             origin: "center",
             font: "sink",
             opacity: goScreen.textop,
+            transform: (i) => {
+              return {
+                pos: vec2(
+                  (i - text.length / 2) * 4,
+                  wave(-1, 1, time() + i * 5)
+                ),
+              };
+            },
           });
           popTransform();
         }

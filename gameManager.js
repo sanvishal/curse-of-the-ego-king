@@ -11,7 +11,7 @@ import { addSlime } from "./entities/enemies/slime.js";
 import { getHead } from "./entities/head.js";
 import { getPlayer } from "./entities/player.js";
 import { uiOffset, roomWidth } from "./utils/constants.js";
-import { getActualCenter } from "./utils/helpers.js";
+import { clamp, getActualCenter } from "./utils/helpers.js";
 
 function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
@@ -22,7 +22,6 @@ const waves = [
     enemies: [
       {
         name: "slime",
-        dir: getRandomArbitrary(0, 360),
         pos: {
           x: getActualCenter().x + Math.cos(randDeg) * 70,
           y: getActualCenter().y + Math.sin(randDeg) * 70,
@@ -33,6 +32,34 @@ const waves = [
         pos: {
           x: getActualCenter().x + Math.cos(randDeg) * -70,
           y: getActualCenter().y + Math.sin(randDeg) * -70,
+        },
+      },
+      {
+        name: "slime",
+        pos: {
+          x: getActualCenter().x + Math.cos(getRandomArbitrary(0, 360)) * 70,
+          y: getActualCenter().y + Math.sin(getRandomArbitrary(0, 360)) * 70,
+        },
+      },
+      {
+        name: "slime",
+        pos: {
+          x: getActualCenter().x + Math.cos(getRandomArbitrary(0, 360)) * -70,
+          y: getActualCenter().y + Math.sin(getRandomArbitrary(0, 360)) * -70,
+        },
+      },
+      {
+        name: "slime",
+        pos: {
+          x: getActualCenter().x + Math.cos(getRandomArbitrary(0, 360)) * 70,
+          y: getActualCenter().y + Math.sin(getRandomArbitrary(0, 360)) * 70,
+        },
+      },
+      {
+        name: "slime",
+        pos: {
+          x: getActualCenter().x + Math.cos(getRandomArbitrary(0, 360)) * -70,
+          y: getActualCenter().y + Math.sin(getRandomArbitrary(0, 360)) * -70,
         },
       },
     ],
@@ -61,6 +88,7 @@ export const addGameManager = () => {
   let waveBanner = add([
     rect(roomWidth, uiOffset / 2 + 10),
     layer("uiOverlay"),
+    z(100000),
     color(0, 0, 0),
     origin("center"),
     pos(roomWidth / 2 + uiOffset / 2, -14),
@@ -151,13 +179,19 @@ export const addGameManager = () => {
     "gm",
     {
       score: 0,
-      currWave: 0,
+      currWave: 1,
       currWaveSpawned: false,
       currEntities: [],
       spawnGap: 100,
       triggerPlay: false,
       triggerNextWave: false,
       nextWaveGap: 300,
+      combo: 1,
+      maxCombo: 1,
+      triggerCombo: false,
+      maxCoolDown: 500,
+      comboCoolDown: 500,
+      playerIsDead: false,
     },
     {
       update: (e) => {
@@ -168,6 +202,18 @@ export const addGameManager = () => {
         if (!head) {
           head = getHead();
         }
+
+        if (e.triggerCombo) {
+          e.comboCoolDown -= clamp(e.combo, 1, 4);
+          if (e.comboCoolDown <= 0) {
+            e.triggerCombo = false;
+            e.combo = 1;
+            gm.trigger("updateScoreIndicator");
+            e.comboCoolDown = e.maxCoolDown;
+          }
+        }
+
+        e.maxCombo = Math.max(e.maxCombo, e.combo);
 
         if (!e.currWaveSpawned) {
           let thingsToSpawn = waves[e.currWave];

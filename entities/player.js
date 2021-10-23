@@ -1,3 +1,4 @@
+import { getGameManager } from "../gameManager.js";
 import {
   roomWidth,
   wallHeight,
@@ -21,6 +22,7 @@ import { getHealthManager } from "./ui/healthManager.js";
 
 export const addPlayer = () => {
   let head = getHead();
+  let hm = getHealthManager();
 
   let ring = add([
     sprite("sprRing", { anim: "loop" }),
@@ -145,6 +147,19 @@ export const addPlayer = () => {
               e.pos = e.pos.add(res);
             }
           }
+        }
+
+        if (head.spd >= 75 && e.playing) {
+          head.damagesPlayer = true;
+          if (testRectPoint(mk, vec2(0))) {
+            if (e.invincibleTimer === 0) {
+              e.hurt();
+              hm.decreaseHealth(1);
+              hm.trigger("updateHealthBar");
+            }
+          }
+        } else {
+          head.damagesPlayer = false;
         }
 
         if (e.isHurt) {

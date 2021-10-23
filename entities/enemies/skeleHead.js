@@ -165,6 +165,9 @@ export const addSkeleHead = ({ x, y }) => {
         if (skeleHead.dieWithPassion && head.hitWall) {
           score += 15;
         }
+        score = score * combo;
+        gm.combo++;
+        gm.triggerCombo = true;
         addScoreBubble({
           x: head.pos.x,
           y: head.pos.y,

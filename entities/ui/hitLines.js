@@ -42,5 +42,4 @@ export const addHitLines = ({ x, y, n = 10 }) => {
       },
     },
   ]);
-  console.log(lines.targx, lines.targy);
 };
