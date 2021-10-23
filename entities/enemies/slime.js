@@ -36,6 +36,7 @@ export const addSlime = ({ x, y }) => {
       baseScore: 15,
       playing: false,
     },
+    "slime",
     {
       add: () => {
         for (let i = 0; i < 6; i++) {

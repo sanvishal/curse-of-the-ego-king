@@ -3,63 +3,70 @@
 slime - move towards you and touches you, damages you - 0
 flying skele head - moves towards you and stays at a distance and fires a bullet occasionally - 1
 spike traps - spikes at the bottom, you can't break it - 2
-auto archer - a machine that shoots arrows in four directions, you can break it but hard to break - 3
+auto shooter - a machine that shoots projectiles in four directions, you can break it but hard to break - 3
 */
 
 import { addDust } from "./entities/dust.js";
+import { addSkeleHead } from "./entities/enemies/skeleHead.js";
 import { addSlime } from "./entities/enemies/slime.js";
+import { addSpike } from "./entities/enemies/spike.js";
 import { getHead } from "./entities/head.js";
 import { getPlayer } from "./entities/player.js";
-import { uiOffset, roomWidth } from "./utils/constants.js";
+import { uiOffset, roomWidth, roomHeight } from "./utils/constants.js";
 import { clamp, getActualCenter } from "./utils/helpers.js";
 
 function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
 }
 let randDeg = getRandomArbitrary(0, 360);
+
+const putSpikes = ({
+  xAmount,
+  yAmount,
+  x = getActualCenter().x,
+  y = getActualCenter().y,
+  shouldPlace,
+}) => {
+  let spikes = [];
+  let spikeSize = 16;
+  let startAtX = x - (xAmount * spikeSize) / 2 + 10;
+  let startAtY = y - (yAmount * spikeSize) / 2 + 10;
+  let iCount = 0;
+  let jCount = 0;
+  for (let i = startAtX; i < startAtX + xAmount * spikeSize; i += spikeSize) {
+    iCount++;
+    for (let j = startAtY; j < startAtY + yAmount * spikeSize; j += spikeSize) {
+      jCount++;
+      if (shouldPlace(iCount, jCount)) {
+        spikes.push({
+          name: "spike",
+          props: {
+            x: i,
+            y: j,
+          },
+        });
+      }
+    }
+    jCount = 0;
+  }
+  return spikes;
+};
+
 const waves = [
   {
     enemies: [
       {
         name: "slime",
-        pos: {
+        props: {
           x: getActualCenter().x + Math.cos(randDeg) * 70,
           y: getActualCenter().y + Math.sin(randDeg) * 70,
         },
       },
       {
         name: "slime",
-        pos: {
+        props: {
           x: getActualCenter().x + Math.cos(randDeg) * -70,
           y: getActualCenter().y + Math.sin(randDeg) * -70,
-        },
-      },
-      {
-        name: "slime",
-        pos: {
-          x: getActualCenter().x + Math.cos(getRandomArbitrary(0, 360)) * 70,
-          y: getActualCenter().y + Math.sin(getRandomArbitrary(0, 360)) * 70,
-        },
-      },
-      {
-        name: "slime",
-        pos: {
-          x: getActualCenter().x + Math.cos(getRandomArbitrary(0, 360)) * -70,
-          y: getActualCenter().y + Math.sin(getRandomArbitrary(0, 360)) * -70,
-        },
-      },
-      {
-        name: "slime",
-        pos: {
-          x: getActualCenter().x + Math.cos(getRandomArbitrary(0, 360)) * 70,
-          y: getActualCenter().y + Math.sin(getRandomArbitrary(0, 360)) * 70,
-        },
-      },
-      {
-        name: "slime",
-        pos: {
-          x: getActualCenter().x + Math.cos(getRandomArbitrary(0, 360)) * -70,
-          y: getActualCenter().y + Math.sin(getRandomArbitrary(0, 360)) * -70,
         },
       },
     ],
@@ -68,16 +75,76 @@ const waves = [
     enemies: [
       {
         name: "slime",
-        pos: {
+        props: {
           x: getActualCenter().x + Math.cos(randDeg) * 70,
-          y: getActualCenter().y + Math.sin(randDeg) * 70,
+          y: getActualCenter().y + Math.sin(randDeg) * -70,
         },
       },
       {
-        name: "slime",
-        pos: {
-          x: getActualCenter().x + Math.cos(randDeg) * -70,
-          y: getActualCenter().y + Math.sin(randDeg) * -70,
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: roomHeight / 2 - 30,
+          xspd: 1,
+          yspd: 1,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: 60,
+          xspd: -1,
+          yspd: -1,
+        },
+      },
+    ],
+  },
+  {
+    hazards: putSpikes({
+      xAmount: 8,
+      yAmount: 8,
+      shouldPlace: (i, j) => {
+        return i === 1 || j === 1 || i === 8 || j === 8;
+      },
+    }),
+    enemies: [
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: 50,
+          xvary: 1,
+          yvary: 2,
+          xspd: 1,
+          yspd: 1,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: roomHeight - 150,
+          xvary: 2,
+          yvary: 2,
+          xspd: -1,
+          yspd: -1,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: 70,
+          xvary: 3,
+          yvary: 1,
+          xspd: -1,
+          yspd: -1,
         },
       },
     ],
@@ -170,7 +237,6 @@ export const addGameManager = () => {
       },
     },
   ]);
-  waveBanner.text = "WAVE 0";
 
   let player = null;
   let head = null;
@@ -179,18 +245,18 @@ export const addGameManager = () => {
     "gm",
     {
       score: 0,
-      currWave: 1,
+      currWave: 0,
       currWaveSpawned: false,
       currEntities: [],
-      spawnGap: 100,
+      spawnGap: 200,
       triggerPlay: false,
       triggerNextWave: false,
       nextWaveGap: 300,
       combo: 1,
       maxCombo: 1,
       triggerCombo: false,
-      maxCoolDown: 500,
-      comboCoolDown: 500,
+      maxCoolDown: 670,
+      comboCoolDown: 670,
       playerIsDead: false,
     },
     {
@@ -204,7 +270,7 @@ export const addGameManager = () => {
         }
 
         if (e.triggerCombo) {
-          e.comboCoolDown -= clamp(e.combo, 1, 4);
+          e.comboCoolDown -= clamp(e.combo, 1, 3);
           if (e.comboCoolDown <= 0) {
             e.triggerCombo = false;
             e.combo = 1;
@@ -218,27 +284,50 @@ export const addGameManager = () => {
         if (!e.currWaveSpawned) {
           let thingsToSpawn = waves[e.currWave];
           let enemies = thingsToSpawn?.enemies;
+          let hazards = thingsToSpawn?.hazards;
           enemies?.forEach((enemy) => {
             switch (enemy?.name) {
               case "slime": {
-                e.currEntities.push(
-                  addSlime({ x: enemy.pos.x, y: enemy.pos.y })
-                );
+                e.currEntities.push(addSlime(enemy.props));
+                break;
+              }
+              case "skeleHead": {
+                e.currEntities.push(addSkeleHead(enemy.props));
+                break;
               }
             }
-            e.currWaveSpawned = true;
-            e.triggerPlay = true;
           });
+          hazards?.forEach((hazard) => {
+            switch (hazard?.name) {
+              case "spike": {
+                e.currEntities.push(addSpike(hazard.props));
+                break;
+              }
+            }
+          });
+          e.currWaveSpawned = true;
+          e.triggerPlay = true;
         }
 
         let noOfEnemies = get("enemy")?.length || 0;
         if (noOfEnemies <= 0 && e.currWave < waves.length) {
+          e.comboCoolDown = e.maxCoolDown;
           e.nextWaveGap--;
           // show wave complete
           if (e.nextWaveGap <= 175) {
             waveBanner.text = "WAVE COMPLETE";
             waveBanner.juicy = true;
             waveBanner.open();
+            every("hazard", (h) => {
+              for (let i = 0; i < 2; i++) {
+                addDust({
+                  x: h.pos.x + rand(-7, 7),
+                  y: h.pos.y + rand(-7, 7),
+                  isSpawn: true,
+                });
+              }
+              destroy(h);
+            });
           }
           // move player and head to center
           if (e.nextWaveGap <= 100 && e.nextWaveGap >= 0) {
@@ -289,8 +378,9 @@ export const addGameManager = () => {
           e.spawnGap--;
           if (e.spawnGap <= 0) {
             e.triggerPlay = false;
-            e.spawnGap = 100;
-            e.currEntities?.map((ent) => {
+            e.spawnGap = 200;
+            player.hurt();
+            e.currEntities?.forEach((ent) => {
               ent.playing = true;
             });
           }
@@ -310,6 +400,9 @@ export const addGameManager = () => {
       },
     },
   ]);
+
+  waveBanner.text = "WAVE " + gm.currWave;
+
   return gm;
 };
 

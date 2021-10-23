@@ -27,6 +27,7 @@ export const addPlayer = () => {
   let ring = add([
     sprite("sprRing", { anim: "loop" }),
     origin("center"),
+    layer("game"),
     pos(center()),
     opacity(0),
     { xscale: 1, yscale: 1 },
@@ -77,6 +78,8 @@ export const addPlayer = () => {
       awayTimer: 0,
       playing: true,
       isDead: false,
+      damagePlayerTrigger: false,
+      damagePlayerTimer: 0,
     },
     {
       update: (e) => {
@@ -150,8 +153,8 @@ export const addPlayer = () => {
         }
 
         if (head.spd >= 75 && e.playing) {
-          head.damagesPlayer = true;
-          if (testRectPoint(mk, vec2(0))) {
+          e.damagePlayerTrigger = true;
+          if (testRectPoint(mk, vec2(0)) && head.damagesPlayer) {
             if (e.invincibleTimer === 0) {
               e.hurt();
               hm.decreaseHealth(1);
@@ -160,6 +163,17 @@ export const addPlayer = () => {
           }
         } else {
           head.damagesPlayer = false;
+          e.damagePlayerTrigger = false;
+          e.damagePlayerTimer = 0;
+        }
+
+        if (e.damagePlayerTrigger) {
+          e.damagePlayerTimer++;
+          if (e.damagePlayerTimer >= 4) {
+            e.damagePlayerTrigger = false;
+            e.damagePlayerTimer = 0;
+            head.damagesPlayer = true;
+          }
         }
 
         if (e.isHurt) {

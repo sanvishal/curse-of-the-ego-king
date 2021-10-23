@@ -91,5 +91,24 @@ export const loadResources = () => {
         poof: { from: 0, to: 1, speed: 8 },
       },
     },
+    sprSpike: {
+      x: 192,
+      y: 40,
+      width: 16 * 2,
+      height: 16,
+      sliceX: 2,
+    },
+    sprBlock: {
+      x: 226,
+      y: 40,
+      width: 17,
+      height: 17,
+    },
+    sprGhostDude: {
+      x: 1,
+      y: 63,
+      width: 12,
+      height: 11,
+    },
   });
 };

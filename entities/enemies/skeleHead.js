@@ -17,13 +17,22 @@ import { addHittable } from "../hittable.js";
 import { getPlayer } from "../player.js";
 import { addScoreBubble } from "../scoreBubble.js";
 
-export const addSkeleHead = ({ x, y }) => {
+export const addSkeleHead = ({
+  x,
+  y,
+  r,
+  yspd = 1,
+  xvary = 2,
+  yvary = 2,
+  xspd = 1,
+}) => {
   let head = getHead();
   let player = getPlayer();
   let gm = getGameManager();
 
   let skeleHead = add([
     sprite("sprSkeleHead"),
+    layer("game"),
     pos(x, y),
     { hitBox: null },
     area(),
@@ -34,7 +43,6 @@ export const addSkeleHead = ({ x, y }) => {
       targetPos: vec2(0, 0),
       hspd: 0,
       vspd: 0,
-      spd: 4,
       fric: 0.1,
       pushBack: false,
       pushBackDir: 0,
@@ -49,14 +57,14 @@ export const addSkeleHead = ({ x, y }) => {
       maxShootTimer: 300,
       dieWithPassion: false,
       baseScore: 25,
-      playing: true,
+      playing: false,
     },
     {
       add: () => {
         for (let i = 0; i < 6; i++) {
           addDust({
-            x: getActualCenter().x + cos(time() / 2) * 50 + rand(-5, 5),
-            y: getActualCenter().y + sin(time() / 2) + rand(-5, 5),
+            x: x + cos(time() / xvary) * r + rand(-5, 5),
+            y: y + sin(time() / yvary) * r + rand(-5, 5),
             isSpawn: true,
             dir: -90,
             spd: 12,
@@ -64,16 +72,12 @@ export const addSkeleHead = ({ x, y }) => {
         }
       },
       update: (e) => {
-        e.spd -= e.fric;
-        e.spd = clamp(e.spd, 4, 200);
         let dir = e.pushBack ? e.pushBackDir : e.targetPos.angle(e.pos);
         e.dir = rad2deg(rLerp(deg2rad(e.dir), deg2rad(dir), 0.03));
-        e.hspd = lengthdir_x(e.spd, 0);
-        e.vspd = lengthdir_y(e.spd, 0);
-        e.pos.x = getActualCenter().x + cos((time() / 2) * e.playing) * 50;
-        e.pos.y = getActualCenter().y + sin((time() / 2) * e.playing) * 50;
+        e.pos.x = x + cos((time() / xvary) * xspd) * r;
+        e.pos.y = y + sin((time() / yvary) * yspd) * r;
 
-        if (Math.random() < 0.2) {
+        if (Math.random() < mapc(Math.max(xspd, yspd), 4, 10, 0.1, 0.5)) {
           addDust({ x: e.pos.x + rand(-3, 3), y: e.pos.y + rand(-3, 3) }).use(
             color(255, 0, 0)
           );
@@ -165,8 +169,9 @@ export const addSkeleHead = ({ x, y }) => {
         if (skeleHead.dieWithPassion && head.hitWall) {
           score += 15;
         }
-        score = score * combo;
+        score = score * gm.combo;
         gm.combo++;
+        gm.comboCoolDown = gm.maxCoolDown;
         gm.triggerCombo = true;
         addScoreBubble({
           x: head.pos.x,
@@ -181,6 +186,8 @@ export const addSkeleHead = ({ x, y }) => {
       },
     },
   ]);
+
+  console.log(skeleHead);
 
   let hittable = addHittable({
     parent: skeleHead,

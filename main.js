@@ -1,38 +1,27 @@
 import { initKaboom } from "./init.js";
 import { generateLevel } from "./levelGen.js";
-import {
-  pointDirection,
-  clamp,
-  pointDistance,
-  minkDiff,
-} from "./utils/helpers.js";
+import { clamp, getActualCenter, sin } from "./utils/helpers.js";
 import { addPlayer } from "./entities/player.js";
 import { addHead } from "./entities/head.js";
 import { addChargerLine } from "./entities/charger.js";
-import { addHittable } from "./entities/hittable.js";
 import { loadResources } from "./loadResources.js";
-import {
-  maxHealth,
-  roomHeight,
-  roomWidth,
-  uiOffset,
-} from "./utils/constants.js";
-import { addSlime } from "./entities/enemies/slime.js";
+import { roomWidth, uiOffset } from "./utils/constants.js";
 import { addSingleHealth } from "./entities/ui/health.js";
 import { addHealthManager } from "./entities/ui/healthManager.js";
-import { addSkeleHead } from "./entities/enemies/skeleHead.js";
 import { addPoof } from "./entities/poof.js";
 import { addHitLines } from "./entities/ui/hitLines.js";
-import { addScoreBubble } from "./entities/scoreBubble.js";
 import { addGameManager } from "./gameManager.js";
 import { addScoreIndicator } from "./entities/ui/scoreIndicator.js";
 import { addGameOverScreen } from "./entities/ui/gameOverScreen.js";
 import { addCorpse } from "./entities/corpse.js";
 import { addDust } from "./entities/dust.js";
+import { addBlock } from "./entities/block.js";
+import { addGhostDude } from "./entities/enemies/ghostDude.js";
 
 // general constants
 let shootRadius = 40;
 let healthBar = [];
+let godMode = true;
 
 // kabooooom!
 initKaboom();
@@ -41,6 +30,9 @@ initKaboom();
 loadResources();
 
 scene("game", () => {
+  // init layers
+  layers(["bg", "corpse", "dust", "game", "ui", "uiOverlay"], "game");
+
   // add bg
   add([
     layer("bg"),
@@ -105,6 +97,8 @@ scene("game", () => {
     b.vspd = 0;
   });
 
+  addGhostDude({ x: getActualCenter().x + 70, y: getActualCenter().y });
+
   const sleep = (k) => {
     // let t = new Date().valueOf() + k;
     // while (new Date().valueOf() < t) {}
@@ -113,6 +107,28 @@ scene("game", () => {
       debug.paused = false;
     }, k);
   };
+
+  head.collides("block", (a) => {
+    a.xscale = 1.5;
+    a.yscale = 1.5;
+    head.hitWall = true;
+    if (Math.abs(head.hspd) > Math.abs(head.vspd)) {
+      head.hspd = -head.hspd;
+    } else {
+      head.vspd = -head.vspd;
+    }
+  });
+
+  collides("hitBox", "block", (a) => {
+    a.parent.pushBack = true;
+    if (Math.abs(a.parent.hspd) > Math.abs(a.parent.vspd)) {
+      a.parent.pushBackDir = 180 - a.parent.dir;
+    } else {
+      a.parent.pushBackDir = -a.parent.dir;
+    }
+
+    a.parent.spd = 1;
+  });
 
   head.collides("hitBox", (a) => {
     if (head.spd >= 0 && head.spd <= 10) {
@@ -154,8 +170,17 @@ scene("game", () => {
       a.parent.spd = mapc(head.spd * 3, 0, 70, 1.4, 1.6);
       a.parent.xscale = 1.5;
       a.parent.yscale = 1.5;
-      a.parent.hurt({ dieWithPassion: true });
-      a.parent.health -= 5;
+      if (a.parent.is("ghostDude")) {
+        a.parent.hurt({ dieWithPassion: true });
+        a.parent.health -= 3;
+        if (a.parent.shooting) {
+          a.parent.hurt({ dieWithPassion: true, specialHit: true });
+          a.parent.health -= 10;
+        }
+      } else {
+        a.parent.hurt({ dieWithPassion: true });
+        a.parent.health -= 5;
+      }
       return;
     }
   });
@@ -175,6 +200,10 @@ scene("game", () => {
     }
   });
 
+  player.collides("spike", (a) => {
+    a.toggleSpike = true;
+  });
+
   player.collides("projectile", (a) => {
     let pos = a.pos;
     destroy(a);
@@ -192,7 +221,7 @@ scene("game", () => {
     healthManager.healthArray.forEach((health, idx) => {
       healthBar[idx].toggle(health);
     });
-    if (healthManager.health <= 0) {
+    if (healthManager.health <= 0 && !godMode) {
       player.isDead = true;
       gm.playerIsDead = true;
       addHitLines({ x: player.pos.x, y: player.pos.y, n: 11 });
@@ -225,20 +254,24 @@ scene("game", () => {
       gameOverScreen.fadeIn();
     }
   });
-  gameOverScreen.fadeIn();
+  // gameOverScreen.fadeIn();
 
   // power up charger for kick
   keyDown("z", () => {
     let dist = player.pos.dist(head.pos);
     if (dist < shootRadius) {
+      player.spd = 0.69;
       charger.charge += 1;
       charger.charge = clamp(charger.charge, 0, charger.maxCharge);
+    } else {
+      charger.charge = 0;
     }
   });
 
   // kick head with charged power
   keyRelease("z", () => {
     let dist = player.pos.dist(head.pos);
+    player.spd = 1;
     if (dist < shootRadius) {
       let dir = head.pos.angle(player.pos);
       head.shoot(dir, mapc(charger.charge, 0, charger.maxCharge, 0, 150));

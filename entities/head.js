@@ -34,7 +34,7 @@ export const addHead = () => {
       headDeltaX: [0, 0],
       headDeltaY: [0, 0],
       rot: 0,
-      aoe: roomHeight / 2 - 50,
+      aoe: roomHeight / 2 - 35,
       hitWall: false,
       playing: true,
       damagesPlayer: false,

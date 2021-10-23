@@ -52,7 +52,7 @@ export const addScoreIndicator = ({ x, y }) => {
           height: mapc(
             gm.comboCoolDown,
             0,
-            500,
+            gm.maxCoolDown,
             0,
             roomHeight - uiOffset / 4 + 2
           ),
@@ -76,12 +76,12 @@ export const addScoreIndicator = ({ x, y }) => {
         }
         drawText({
           text: gm.playerIsDead
-            ? `${gm.maxCombo} MAX COMBO`
+            ? `${gm.maxCombo}x MAX COMBO`
             : `${gm.combo}x COMBO`,
           font: "sink",
           size: 8,
           origin: "left",
-          transform: (i, c) => {
+          transform: (i) => {
             return {
               pos: vec2(
                 -i * 6 + (gm.triggerCombo ? wave(-1, 1, 5 * (time() + i)) : 0),
