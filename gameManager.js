@@ -13,6 +13,7 @@ import { addSkeleHead } from "./entities/enemies/skeleHead.js";
 import { addSlime } from "./entities/enemies/slime.js";
 import { addSpike } from "./entities/enemies/spike.js";
 import { getHead } from "./entities/head.js";
+import { addHealthPickup } from "./entities/healthPickup.js";
 import { getPlayer } from "./entities/player.js";
 import { uiOffset, roomWidth, roomHeight } from "./utils/constants.js";
 import {
@@ -450,53 +451,6 @@ const waves = [
     ],
   },
   {
-    hazards: putItems({
-      xAmount: 13,
-      yAmount: 13,
-      shouldPlace: (i, j, xAmnt, yAmnt) => {
-        return !((i + j - 1) % 4);
-      },
-      itemHeight: 16,
-      itemWidth: 16,
-      itemName: "spike",
-    }),
-    enemies: [
-      {
-        name: "ghostDude",
-        props: {
-          x: getActualCenter().x + 100,
-          y: getActualCenter().y,
-        },
-      },
-      {
-        name: "ghostDude",
-        props: {
-          x: getActualCenter().x - 100,
-          y: getActualCenter().y,
-        },
-      },
-      {
-        name: "skeleHead",
-        props: {
-          x: getActualCenter().x,
-          y: getActualCenter().y,
-          r: roomWidth / 2 - 40,
-          xvary: 1,
-          yvary: 5,
-          yspd: 1,
-          xspd: 1,
-        },
-      },
-      {
-        name: "ghostDude",
-        props: {
-          x: getActualCenter().x,
-          y: getActualCenter().y + 100,
-        },
-      },
-    ],
-  },
-  {
     hazards: [
       ...putItems({
         y: getActualCenter().y - 75,
@@ -570,6 +524,121 @@ const waves = [
         props: {
           x: getActualCenter().x,
           y: getActualCenter().y - 100,
+        },
+      },
+    ],
+  },
+  {
+    hazards: putItems({
+      xAmount: 13,
+      yAmount: 13,
+      shouldPlace: (i, j, xAmnt, yAmnt) => {
+        return !((i + j - 1) % 4);
+      },
+      itemHeight: 16,
+      itemWidth: 16,
+      itemName: "spike",
+    }),
+    enemies: [
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x + 100,
+          y: getActualCenter().y,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x - 100,
+          y: getActualCenter().y,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: roomWidth / 2 - 40,
+          xvary: 1,
+          yvary: 5,
+          yspd: 1,
+          xspd: 1,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y + 100,
+        },
+      },
+    ],
+  },
+  {
+    hazards: putItems({
+      xAmount: 1,
+      yAmount: 1,
+      shouldPlace: (i, j, xAmnt, yAmnt) => {
+        return true;
+      },
+      itemHeight: 17,
+      itemWidth: 17,
+      itemName: "block",
+    }),
+    enemies: [
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x + 100,
+          y: getActualCenter().y,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x - 100,
+          y: getActualCenter().y,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: roomWidth / 2 - 40,
+          xvary: 1,
+          yvary: 5,
+          yspd: 1,
+          xspd: 1,
+          special: true,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: roomWidth / 2 - 40,
+          xvary: 5,
+          yvary: 1,
+          yspd: 1,
+          xspd: 1,
+          special: true,
+        },
+      },
+      {
+        name: "slime",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y - 60,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y + 100,
         },
       },
     ],
@@ -665,12 +734,13 @@ export const addGameManager = () => {
 
   let player = null;
   let head = null;
+  let limits = [900, 1000, 1200, 1500, 1900, 2400, 2800, 3200];
 
   let gm = add([
     "gm",
     {
       score: 0,
-      currWave: 7,
+      currWave: 0,
       currWaveSpawned: false,
       currEntities: [],
       spawnGap: 120,
@@ -686,8 +756,9 @@ export const addGameManager = () => {
       hitName: "",
       speedUp: false,
       speedUpTimer: 0,
-      speedUpLimit: 1000,
+      speedUpLimit: 200,
       fxBg: null,
+      putHeartTimer: 0,
     },
     {
       update: (e) => {
@@ -763,6 +834,21 @@ export const addGameManager = () => {
         }
 
         let noOfEnemies = get("enemy")?.length || 1;
+        e.putHeartTimer += 1 * player.playing;
+        try {
+          if (e.putHeartTimer === limits[gm.health - 1]) {
+            e.putHeartTimer = 0;
+            if (noOfEnemies > 1) {
+              addHealthPickup({
+                x: rand(uiOffset + 14, roomWidth - uiOffset / 4),
+                y: rand(uiOffset + 20, roomHeight - uiOffset / 4),
+              });
+            }
+          }
+        } catch (err) {
+          // just to be safe
+        }
+
         if (noOfEnemies <= 0 && e.currWave < waves.length) {
           e.speedUp = false;
           e.speedUpTimer = 0;
@@ -832,6 +918,7 @@ export const addGameManager = () => {
           if (e.spawnGap <= 0) {
             e.triggerPlay = false;
             e.spawnGap = 120;
+            e.putHeartTimer = 0;
             player.playing = true;
             head.playing = true;
             player.hurt();

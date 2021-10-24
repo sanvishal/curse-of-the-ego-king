@@ -265,6 +265,9 @@ export const addPlayer = () => {
           }
         }
       },
+      kick: () => {
+        // player.triggerKickAnim = true;
+      },
       hurt: (enemy) => {
         if (player.playing) {
           player.isHurt = true;

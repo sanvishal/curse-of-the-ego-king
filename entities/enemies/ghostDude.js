@@ -94,7 +94,7 @@ export const addGhostDude = ({ x, y }) => {
         e.shootTimer += (gm.speedUp ? 1.7 : 1) * e.playing;
         if (e.shootTimer >= e.triggerShootTimer - 50) {
           e.rot += 40;
-          if (Math.random() < 0.7) {
+          if (Math.random() < 0.2) {
             addDust({
               x: e.pos.x + rand(-6, 6),
               y: e.pos.y + rand(-6, 6),
@@ -108,8 +108,8 @@ export const addGhostDude = ({ x, y }) => {
           e.shootTimer = 0;
           e.shooting = true;
           e.dirToShoot = vec2(
-            player.pos.x + rand(-35, 35),
-            player.pos.y + rand(-35, 35)
+            head.pos.x + rand(-20, 20),
+            head.pos.y + rand(-20, 20)
           ).angle(e.pos);
           e.rot = e.dirToShoot + 90;
           e.triggerShootTimer = rand(260, 400);
@@ -236,8 +236,8 @@ export const addGhostDude = ({ x, y }) => {
 
   let hittable = addHittable({
     parent: ghost,
-    width: 6,
-    height: 6,
+    width: 8,
+    height: 8,
     damagesPlayer: true,
   });
   ghost.hitBox = hittable;

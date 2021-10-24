@@ -24,6 +24,9 @@ import { addDust } from "./entities/dust.js";
 import { addGhostDude } from "./entities/enemies/ghostDude.js";
 import { addSkeleHead } from "./entities/enemies/skeleHead.js";
 import { addFireball } from "./entities/fireball.js";
+import { addHealthPickup } from "./entities/healthPickup.js";
+import { addScoreBubble } from "./entities/scoreBubble.js";
+import { addSnakeBoss } from "./entities/enemies/snakeBoss.js";
 
 // general constants
 let shootRadius = 40;
@@ -112,7 +115,9 @@ scene("game", () => {
   collides("hitBox", "hitBox", (a, b) => {
     a.parent.pushBack = true;
     a.parent.pushBackDir = a.pos.angle(b.pos);
-    a.parent.spd = 1;
+    if (!a.parent.is("skeleHeadBoss")) {
+      a.parent.spd = 1;
+    }
   });
 
   let gameOverScreen = addGameOverScreen();
@@ -157,6 +162,16 @@ scene("game", () => {
     }
   });
 
+  collides("skeleHeadBossHead", "wall", (a, b) => {
+    a.xscale = 1.5;
+    a.yscale = 1.5;
+    if (b.dir === "topdown") {
+      a.vspd = -a.vspd;
+    } else if (b.dir === "leftright") {
+      a.hspd = -a.hspd;
+    }
+  });
+
   collides("hitBox", "block", (a, b) => {
     a.parent.pushBack = true;
     if (Math.abs(a.parent.hspd) > Math.abs(a.parent.vspd)) {
@@ -181,8 +196,28 @@ scene("game", () => {
   });
 
   head.collides("hitBox", (a) => {
+    if (head.spd === 0) {
+      if (a.parent.is("ghostDude")) {
+        head.spd = 50;
+        head.dir = a.parent.dir;
+        if (Math.abs(a.parent.hspd) > Math.abs(a.parent.vspd)) {
+          a.parent.dirToShoot = 180 - a.parent.dirToShoot;
+        } else {
+          a.parent.dirToShoot = -a.parent.dirToShoot;
+        }
+        return;
+      }
+    }
     if (head.spd >= 0 && head.spd <= 10) {
       head.spd /= 3;
+      if (a.parent.is("ghostDude")) {
+        head.dir = a.parent.dir;
+        if (Math.abs(a.parent.hspd) > Math.abs(a.parent.vspd)) {
+          a.parent.dirToShoot = 180 - a.parent.dirToShoot;
+        } else {
+          a.parent.dirToShoot = -a.parent.dirToShoot;
+        }
+      }
       return;
     }
     if (head.spd <= 70 && head.spd >= 10) {
@@ -204,6 +239,13 @@ scene("game", () => {
       } else {
         head.vspd = -head.vspd;
       }
+      if (a.parent.is("ghostDude")) {
+        if (Math.abs(a.parent.hspd) > Math.abs(a.parent.vspd)) {
+          a.parent.dirToShoot = 180 - a.parent.dirToShoot;
+        } else {
+          a.parent.dirToShoot = -a.parent.dirToShoot;
+        }
+      }
       return;
     }
     if (head.spd >= 70) {
@@ -223,6 +265,9 @@ scene("game", () => {
       if (a.parent.is("ghostDude")) {
         a.parent.hurt({ dieWithPassion: true });
         a.parent.health -= 3;
+        if (a.parent.shootTimer >= a.parent.triggerShootTimer - 50) {
+          a.parent.health -= 6;
+        }
         if (a.parent.shooting) {
           a.parent.hurt({ dieWithPassion: true, specialHit: true });
           a.parent.health -= 16;
@@ -311,6 +356,18 @@ scene("game", () => {
     }
   });
 
+  player.collides("healthPickup", (a) => {
+    healthManager.increaseHealth(1);
+    healthManager.trigger("updateHealthBar");
+    destroy(a);
+    player.hurt();
+    addScoreBubble({
+      x: player.pos.x,
+      y: player.pos.y,
+      amount: "<3",
+    });
+  });
+
   healthManager.on("updateHealthBar", () => {
     healthManager.healthArray.forEach((health, idx) => {
       healthBar[idx].toggle(health);
@@ -362,6 +419,8 @@ scene("game", () => {
     }
   });
 
+  addSnakeBoss({ x: getActualCenter().x + 50, y: getActualCenter().y });
+
   // kick head with charged power
   keyRelease("z", () => {
     let dist = player.pos.dist(head.pos);
@@ -369,6 +428,7 @@ scene("game", () => {
     if (dist < shootRadius) {
       let dir = head.pos.angle(player.pos);
       head.shoot(dir, mapc(charger.charge, 0, charger.maxCharge, 0, 150));
+      player.kick();
     }
   });
 
