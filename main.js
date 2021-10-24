@@ -1,6 +1,12 @@
 import { initKaboom } from "./init.js";
 import { generateLevel } from "./levelGen.js";
-import { clamp, getActualCenter, sin } from "./utils/helpers.js";
+import {
+  clamp,
+  getActualCenter,
+  lengthdir_x,
+  lengthdir_y,
+  sin,
+} from "./utils/helpers.js";
 import { addPlayer } from "./entities/player.js";
 import { addHead } from "./entities/head.js";
 import { addChargerLine } from "./entities/charger.js";
@@ -15,6 +21,9 @@ import { addScoreIndicator } from "./entities/ui/scoreIndicator.js";
 import { addGameOverScreen } from "./entities/ui/gameOverScreen.js";
 import { addCorpse } from "./entities/corpse.js";
 import { addDust } from "./entities/dust.js";
+import { addGhostDude } from "./entities/enemies/ghostDude.js";
+import { addSkeleHead } from "./entities/enemies/skeleHead.js";
+import { addFireball } from "./entities/fireball.js";
 
 // general constants
 let shootRadius = 40;
@@ -46,12 +55,12 @@ scene("game", () => {
       update: (e) => {
         if (e.triggerfx) {
           e.flashTimer++;
-          if (e.flashTimer >= 50) {
+          if (e.flashTimer >= 60) {
             e.flashTimer = 0;
             e.triggerfx = false;
           }
           if (e.flashTimer % 10 < 5) {
-            e.use(opacity(0.2));
+            e.use(opacity(0.25));
           } else {
             e.use(opacity(0));
           }
@@ -88,6 +97,7 @@ scene("game", () => {
   let player = addPlayer();
   let { _, charger } = addChargerLine();
 
+  healthBar = [];
   healthManager.healthArray.forEach((health, i) => {
     healthBar.push(
       addSingleHealth({
@@ -215,19 +225,63 @@ scene("game", () => {
         a.parent.health -= 3;
         if (a.parent.shooting) {
           a.parent.hurt({ dieWithPassion: true, specialHit: true });
-          a.parent.health -= 10;
+          a.parent.health -= 16;
         }
       } else {
         a.parent.hurt({ dieWithPassion: true });
         a.parent.health -= 5;
+      }
+      if (a.parent.health >= 0) {
+        if (Math.abs(head.hspd) > Math.abs(head.vspd)) {
+          head.hspd = -head.hspd;
+        } else {
+          head.vspd = -head.vspd;
+        }
       }
       return;
     }
   });
 
   head.collides("projectile", (a) => {
-    addPoof({ x: a.pos.x, y: a.pos.y });
-    destroy(a);
+    if (!a.special) {
+      addPoof({ x: a.pos.x, y: a.pos.y });
+      destroy(a);
+    } else if (head.spd >= 50) {
+      addHitLines({ x: a.pos.x, y: a.pos.y });
+      shake(0.5);
+      gm.hitName = "DEFLECTED!";
+      a.isDeflected = true;
+      // a.deflectDir = head.dir;
+      if (Math.abs(head.hspd) > Math.abs(head.vspd)) {
+        a.xDir = -1;
+      } else {
+        a.yDir = -1;
+      }
+      a.defSpd = mapc(head.spd, 10, 100, 3, 10);
+    }
+  });
+
+  keyPress("x", (v) => {
+    addFireball({
+      x: mousePos().x,
+      y: mousePos().y,
+      special: true,
+      spd: 1,
+      dir: 0,
+    });
+  });
+
+  collides("enemy", "projectile", (a, b) => {
+    if (b.special && b.isDeflected) {
+      addHitLines({ x: a.pos.x, y: a.pos.y });
+      shake(0.5);
+      sleep(65);
+      addPoof({ x: a.pos.x, y: a.pos.y });
+      destroy(b);
+      a.parent.hurt({ dieWithPassion: true, hitByProjectile: true });
+      a.parent.health -= 1;
+      gm.hitName = "DEFLECT HIT!";
+    }
   });
 
   player.collides("enemy", () => {
@@ -247,7 +301,7 @@ scene("game", () => {
   player.collides("projectile", (a) => {
     let pos = a.pos;
     destroy(a);
-    if (player.invincibleTimer === 0) {
+    if (player.invincibleTimer === 0 && !a.isDeflected) {
       addPoof({ x: pos.x, y: pos.y });
       if (player.playing) {
         player.hurt();
@@ -300,8 +354,8 @@ scene("game", () => {
   keyDown("z", () => {
     let dist = player.pos.dist(head.pos);
     if (dist < shootRadius) {
-      player.spd = 0.69;
-      charger.charge += 1;
+      player.spd = 0.6;
+      charger.charge += 0.5;
       charger.charge = clamp(charger.charge, 0, charger.maxCharge);
     } else {
       charger.charge = 0;

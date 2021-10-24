@@ -75,11 +75,23 @@ export const loadResources = () => {
       width: 10,
       height: 9,
     },
+    sprSplSkeleHead: {
+      x: 12,
+      y: 52,
+      width: 10,
+      height: 9,
+    },
     sprFireball: {
       x: 162,
       y: 41,
       width: 7,
       height: 7,
+    },
+    sprSplFireball: {
+      x: 162,
+      y: 49,
+      width: 8,
+      height: 8,
     },
     sprProjPoof: {
       x: 170,

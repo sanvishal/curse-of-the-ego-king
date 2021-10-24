@@ -69,7 +69,7 @@ export const addPlayer = () => {
       playerDeltaY: [0, 0],
       isHurt: false,
       invincibleTimer: 0,
-      invincibleTime: 70,
+      invincibleTime: 160,
       swaySpeed: 0.07,
       swayAmount: -10,
       t: 0.5,
@@ -104,7 +104,7 @@ export const addPlayer = () => {
         }
 
         e.t = clamp(e.t, 0, 1);
-        e.ang = lerp(-e.swayAmount, e.swayAmount, e.t);
+        e.ang = lerp(e.swayAmount, -e.swayAmount, e.t);
         e.use(rotate(e.ang));
 
         // prevent moving in diagonals with extra speed
@@ -215,7 +215,7 @@ export const addPlayer = () => {
         if (e.pos.dist(head.pos) > head.aoe && player.playing) {
           e.awayTimer += 1;
           e.activateRing = true;
-          if (e.awayTimer % 260 === 0) {
+          if (e.awayTimer % 200 === 0) {
             let hm = getHealthManager();
             e.hurt();
             hm.decreaseHealth(1);

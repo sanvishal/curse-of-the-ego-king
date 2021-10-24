@@ -35,6 +35,7 @@ export const addSlime = ({ x, y }) => {
       dieWithPassion: false,
       baseScore: 15,
       playing: false,
+      hitByProjectile: false,
     },
     "slime",
     {
@@ -59,8 +60,8 @@ export const addSlime = ({ x, y }) => {
         );
         e.hspd = lengthdir_x(e.spd, e.dir);
         e.vspd = lengthdir_y(e.spd, e.dir);
-        e.pos.x += e.hspd * e.playing * (gm.speedUp ? 1.34 : 1);
-        e.pos.y += e.vspd * e.playing * (gm.speedUp ? 1.34 : 1);
+        e.pos.x += e.hspd * e.playing * (gm.speedUp ? 1.4 : 1);
+        e.pos.y += e.vspd * e.playing * (gm.speedUp ? 1.4 : 1);
 
         if (e.pushBack) {
           e.pushBackTimer -= 1;
@@ -114,6 +115,7 @@ export const addSlime = ({ x, y }) => {
       hurt: (die) => {
         slime.isHurt = true;
         slime.dieWithPassion = die?.dieWithPassion;
+        slime.hitByProjectile = die?.hitByProjectile;
       },
       die: () => {
         addCorpse({
@@ -126,19 +128,23 @@ export const addSlime = ({ x, y }) => {
           dieWithPassion: slime.dieWithPassion,
         });
         let score = slime.baseScore;
-        if (head.hitWall) {
-          score += 10;
-          gm.hitName = "BACK SHOT +10";
-        }
         if (slime.dieWithPassion) {
           score += 5;
           gm.hitName = "SUPER SHOT +5";
+        }
+        if (head.hitWall) {
+          score += 10;
+          gm.hitName = "BACK SHOT +10";
         }
         if (slime.dieWithPassion && head.hitWall) {
           score += 15;
           gm.hitName = "SUPER BACK SHOT +15";
         }
-        score = score * gm.combo;
+        if (slime.hitByProjectile) {
+          score += 20;
+          gm.hitName = "DEFLECTED SHOT +15";
+        }
+        score = score * gm.combo + (gm.speedUp ? 10 : 0);
         gm.combo++;
         gm.comboCoolDown = gm.maxCoolDown;
         gm.triggerCombo = true;

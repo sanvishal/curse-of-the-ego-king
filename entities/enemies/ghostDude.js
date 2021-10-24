@@ -32,7 +32,7 @@ export const addGhostDude = ({ x, y }) => {
       fric: 0.1,
       xscale: 1,
       yscale: 1,
-      health: 10,
+      health: 9,
       isHurt: false,
       hurtFrame: 10,
       dieWithPassion: false,
@@ -46,8 +46,9 @@ export const addGhostDude = ({ x, y }) => {
       shooting: false,
       dirToShoot: 0,
       shootSpeed: 5,
-      triggerShootTimer: 400,
+      triggerShootTimer: rand(200, 400),
       rot: 0,
+      hitByProjectile: false,
     },
     {
       add: () => {
@@ -67,8 +68,17 @@ export const addGhostDude = ({ x, y }) => {
         e.hspd = lengthdir_x(e.shooting ? e.shootSpeed : e.normalSpd, e.dir);
         e.vspd = lengthdir_y(e.shooting ? e.shootSpeed : e.normalSpd, e.dir);
 
-        e.pos.x += e.hspd * e.playing * (!e.waiting || e.shooting);
-        e.pos.y += e.vspd * e.playing * (!e.waiting || e.shooting);
+        e.pos.x +=
+          e.hspd *
+          e.playing *
+          (!e.waiting || e.shooting) *
+          (gm.speedUp ? 1.3 : 1);
+        e.pos.y +=
+          e.vspd *
+          e.playing *
+          (!e.waiting || e.shooting) *
+          (gm.speedUp ? 1.3 : 1);
+
         if (
           Math.floor(e.pos.dist(e.targetPos)) <= 20 &&
           !e.waiting &&
@@ -81,7 +91,7 @@ export const addGhostDude = ({ x, y }) => {
           );
         }
 
-        e.shootTimer += 1 * e.playing;
+        e.shootTimer += (gm.speedUp ? 1.7 : 1) * e.playing;
         if (e.shootTimer >= e.triggerShootTimer - 50) {
           e.rot += 40;
           if (Math.random() < 0.7) {
@@ -93,17 +103,21 @@ export const addGhostDude = ({ x, y }) => {
             }).use(color(255, 0, 0));
           }
         }
+
         if (e.shootTimer >= e.triggerShootTimer) {
           e.shootTimer = 0;
           e.shooting = true;
-          e.dirToShoot = player.pos.angle(e.pos);
+          e.dirToShoot = vec2(
+            player.pos.x + rand(-35, 35),
+            player.pos.y + rand(-35, 35)
+          ).angle(e.pos);
           e.rot = e.dirToShoot + 90;
           e.triggerShootTimer = rand(260, 400);
         }
 
         if (e.waiting && !e.shooting) {
           e.watingTimer++;
-          if (e.watingTimer >= 50) {
+          if (e.watingTimer >= (gm.speedUp ? 30 : 50)) {
             e.watingTimer = 0;
             e.waiting = false;
           }
@@ -169,6 +183,7 @@ export const addGhostDude = ({ x, y }) => {
         ghost.isHurt = true;
         ghost.dieWithPassion = die?.dieWithPassion;
         ghost.specialHit = die?.specialHit;
+        ghost.hitByProjectile = die?.hitByProjectile;
       },
       die: () => {
         addCorpse({
@@ -181,23 +196,27 @@ export const addGhostDude = ({ x, y }) => {
           dieWithPassion: ghost.dieWithPassion,
         });
         let score = ghost.baseScore;
-        if (head.hitWall) {
-          score += 10;
-          gm.hitName = "BACK SHOT +10";
-        }
         if (ghost.dieWithPassion) {
           score += 5;
           gm.hitName = "SUPER SHOT +5";
+        }
+        if (head.hitWall) {
+          score += 10;
+          gm.hitName = "BACK SHOT +10";
         }
         if (ghost.dieWithPassion && head.hitWall) {
           score += 15;
           gm.hitName = "SUPER BACK SHOT +15";
         }
+        if (ghost.hitByProjectile) {
+          score += 20;
+          gm.hitName = "DEFLECTED SHOT +15";
+        }
         if (ghost.specialHit) {
           score += 25;
           gm.hitName = "SPECIAL SHOT +25";
         }
-        score = score * gm.combo;
+        score = score * gm.combo + (gm.speedUp ? 20 : 0);
         gm.combo++;
         gm.comboCoolDown = gm.maxCoolDown;
         gm.triggerCombo = true;

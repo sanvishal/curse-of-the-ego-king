@@ -1,3 +1,4 @@
+import { getGameManager } from "../gameManager.js";
 import { roomHeight } from "../utils/constants.js";
 import {
   clamp,
@@ -12,6 +13,7 @@ import { addDust } from "./dust.js";
 import { getPlayer } from "./player.js";
 
 export const addHead = () => {
+  let gm = getGameManager();
   let player = null;
   let head = add([
     // rect(20, 20),
@@ -34,7 +36,7 @@ export const addHead = () => {
       headDeltaX: [0, 0],
       headDeltaY: [0, 0],
       rot: 0,
-      aoe: roomHeight / 2 - 50,
+      aoe: roomHeight / 2 - 30,
       hitWall: false,
       playing: false,
       damagesPlayer: false,
@@ -42,7 +44,7 @@ export const addHead = () => {
     {
       update: (e) => {
         e.spd -= e.fric;
-        e.spd = clamp(e.spd, 0, 200);
+        e.spd = clamp(e.spd, 0, 300);
 
         e.hspd += lengthdir_x(e.spd, e.dir);
         e.vspd += lengthdir_y(e.spd, e.dir);
@@ -71,10 +73,15 @@ export const addHead = () => {
 
         e.rot += e.spd / 4;
         e.rot = e.rot % 360;
-        if (floor(mapc(e.spd, 0, 100, 0, 2)) === 0) {
-          e.frame = 0;
+        // if (floor(mapc(e.spd, 0, 100, 1, 2)) === 1) {
+        //   e.frame = 0;
+        // } else {
+        //   e.frame += floor(mapc(e.spd, 0, 150, 1, 2));
+        // }
+        if (e.spd >= 30) {
+          e.frame += floor(mapc(e.spd, 0, 150, 1, 3));
         } else {
-          e.frame += floor(mapc(e.spd, 0, 150, 0, 2));
+          e.frame = 0;
         }
 
         e.frame %= e.numFrames();
@@ -99,7 +106,7 @@ export const addHead = () => {
       shoot: (dir, power) => {
         if (head.playing) {
           head.dir = dir;
-          head.spd = power;
+          head.spd = power * (gm.speedUp ? 1.5 : 1);
         }
       },
       resetSpeed: () => {

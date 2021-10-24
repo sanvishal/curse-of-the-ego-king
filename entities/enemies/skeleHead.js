@@ -25,13 +25,14 @@ export const addSkeleHead = ({
   xvary = 2,
   yvary = 2,
   xspd = 1,
+  special = false,
 }) => {
   let head = getHead();
   let player = getPlayer();
   let gm = getGameManager();
 
   let skeleHead = add([
-    sprite("sprSkeleHead"),
+    sprite(special ? "sprSplSkeleHead" : "sprSkeleHead"),
     layer("game"),
     pos(x, y),
     { hitBox: null },
@@ -50,21 +51,26 @@ export const addSkeleHead = ({
       xscale: 1,
       yscale: 1,
       targetTimer: 400,
-      health: 3,
+      health: special ? 7 : 3,
       isHurt: false,
       hurtFrame: 10,
       shootFireballTimer: 300,
       maxShootTimer: 300,
       dieWithPassion: false,
       baseScore: 25,
-      playing: false,
+      specialBaseScore: 35,
+      playing: true,
+      special,
+      normalFireRate: 1,
+      specialFireRate: 0.5,
+      hitByProjectile: false,
     },
     {
       add: () => {
         for (let i = 0; i < 6; i++) {
           addDust({
-            x: x + cos(time() / xvary) * r + rand(-5, 5),
-            y: y + sin(time() / yvary) * r + rand(-5, 5),
+            x: x + cos((time() / xvary) * xspd) * r + rand(-5, 5),
+            y: y + sin((time() / yvary) * yspd) * r + rand(-5, 5),
             isSpawn: true,
             dir: -90,
             spd: 12,
@@ -74,12 +80,14 @@ export const addSkeleHead = ({
       update: (e) => {
         let dir = e.pushBack ? e.pushBackDir : e.targetPos.angle(e.pos);
         e.dir = rad2deg(rLerp(deg2rad(e.dir), deg2rad(dir), 0.03));
-        e.pos.x = x + cos((time() / xvary) * xspd) * r;
-        e.pos.y = y + sin((time() / yvary) * yspd) * r;
+        e.pos.x =
+          x + cos((time() / xvary) * (e.special ? xspd * 0.7 : xspd)) * r;
+        e.pos.y =
+          y + sin((time() / yvary) * (e.special ? yspd * 0.7 : yspd)) * r;
 
         if (Math.random() < mapc(Math.max(xspd, yspd), 4, 10, 0.1, 0.5)) {
           addDust({ x: e.pos.x + rand(-3, 3), y: e.pos.y + rand(-3, 3) }).use(
-            color(255, 0, 0)
+            e.special ? color(0, 255, 0) : color(255, 0, 0)
           );
         }
         e.use(rotate(wave(-15, 15, time() * 4)));
@@ -97,22 +105,24 @@ export const addSkeleHead = ({
           }
         }
 
-        e.shootFireballTimer -= (gm.speedUp ? 2 : 1.5) * e.playing;
+        e.shootFireballTimer -=
+          (e.special
+            ? e.specialFireRate + (gm.speedUp ? 0.1 : 0)
+            : e.normalFireRate + (gm.speedUp ? 0.5 : 0)) * e.playing;
         if (e.shootFireballTimer <= 0) {
-          if (e.shootFireballTimer === 0) {
-            e.xscale = 1.3;
-            e.yscale = 1.3;
-            addFireball({
-              x: e.pos.x,
-              y: e.pos.y,
-              dir: vec2(
-                player.pos.x + rand(-20, 20),
-                player.pos.y + rand(-20, 20)
-              ).angle(e.pos),
-              spd: 25,
-            });
-          }
           e.shootFireballTimer = e.maxShootTimer;
+          e.xscale = 1.3;
+          e.yscale = 1.3;
+          addFireball({
+            x: e.pos.x,
+            y: e.pos.y,
+            dir: vec2(
+              player.pos.x + rand(-20, 20),
+              player.pos.y + rand(-20, 20)
+            ).angle(e.pos),
+            spd: 25,
+            special: e.special,
+          });
         }
 
         if (e.health <= 0) {
@@ -148,6 +158,7 @@ export const addSkeleHead = ({
       hurt: (die) => {
         skeleHead.isHurt = true;
         skeleHead.dieWithPassion = die?.dieWithPassion;
+        skeleHead.hitByProjectile = die?.hitByProjectile;
       },
       die: () => {
         addCorpse({
@@ -159,20 +170,26 @@ export const addSkeleHead = ({
           spr: "sprSkeleHead",
           dieWithPassion: skeleHead.dieWithPassion,
         });
-        let score = skeleHead.baseScore;
-        if (head.hitWall) {
-          score += 10;
-          gm.hitName = "BACK SHOT +10";
-        }
+        let score = skeleHead.special
+          ? skeleHead.specialBaseScore
+          : skeleHead.baseScore;
         if (skeleHead.dieWithPassion) {
           score += 5;
           gm.hitName = "SUPER SHOT +5";
+        }
+        if (head.hitWall) {
+          score += 10;
+          gm.hitName = "BACK SHOT +10";
         }
         if (skeleHead.dieWithPassion && head.hitWall) {
           score += 15;
           gm.hitName = "SUPER BACK SHOT +15";
         }
-        score = score * gm.combo;
+        if (skeleHead.hitByProjectile) {
+          score += 20;
+          gm.hitName = "DEFLECTED SHOT +15";
+        }
+        score = score * gm.combo + (gm.speedUp ? 15 : 0);
         gm.combo++;
         gm.comboCoolDown = gm.maxCoolDown;
         gm.triggerCombo = true;

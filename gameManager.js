@@ -8,6 +8,7 @@ auto shooter - a machine that shoots projectiles in four directions, you can bre
 
 import { addBlock } from "./entities/block.js";
 import { addDust } from "./entities/dust.js";
+import { addGhostDude } from "./entities/enemies/ghostDude.js";
 import { addSkeleHead } from "./entities/enemies/skeleHead.js";
 import { addSlime } from "./entities/enemies/slime.js";
 import { addSpike } from "./entities/enemies/spike.js";
@@ -268,6 +269,311 @@ const waves = [
       },
     ],
   },
+  {
+    hazards: [
+      ...putItems({
+        xAmount: 7,
+        yAmount: 7,
+        shouldPlace: (i, j, xAmnt, yAmnt) => {
+          return (
+            (i === 1 && j === 1) ||
+            (i === 1 && j === yAmnt) ||
+            (i === xAmnt && j === 1) ||
+            (i === xAmnt && j === yAmnt)
+          );
+        },
+        itemHeight: 17,
+        itemWidth: 17,
+        itemName: "block",
+      }),
+      ...putItems({
+        xAmount: 3,
+        yAmount: 3,
+        x: getActualCenter().x - (16 * 6) / 2 - 3,
+        y: getActualCenter().y - (16 * 6) / 2 - 3,
+        shouldPlace: (i, j, xAmnt, yAmnt) => {
+          return i === 1 || j === 1 || i === xAmnt || j === yAmnt;
+        },
+        itemHeight: 16,
+        itemWidth: 16,
+        itemName: "spike",
+      }),
+      ...putItems({
+        xAmount: 3,
+        yAmount: 3,
+        x: getActualCenter().x + (16 * 6) / 2 + 3,
+        y: getActualCenter().y - (16 * 6) / 2 - 3,
+        shouldPlace: (i, j, xAmnt, yAmnt) => {
+          return i === 1 || j === 1 || i === xAmnt || j === yAmnt;
+        },
+        itemHeight: 16,
+        itemWidth: 16,
+        itemName: "spike",
+      }),
+      ...putItems({
+        xAmount: 3,
+        yAmount: 3,
+        x: getActualCenter().x - (16 * 6) / 2 - 3,
+        y: getActualCenter().y + (16 * 6) / 2 + 3,
+        shouldPlace: (i, j, xAmnt, yAmnt) => {
+          return i === 1 || j === 1 || i === xAmnt || j === yAmnt;
+        },
+        itemHeight: 16,
+        itemWidth: 16,
+        itemName: "spike",
+      }),
+      ...putItems({
+        xAmount: 3,
+        yAmount: 3,
+        x: getActualCenter().x + (16 * 6) / 2 + 3,
+        y: getActualCenter().y + (16 * 6) / 2 + 3,
+        shouldPlace: (i, j, xAmnt, yAmnt) => {
+          return i === 1 || j === 1 || i === xAmnt || j === yAmnt;
+        },
+        itemHeight: 16,
+        itemWidth: 16,
+        itemName: "spike",
+      }),
+    ],
+    enemies: [
+      {
+        name: "slime",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y - 80,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y + 100,
+          r: roomWidth / 2 - 40,
+          yvary: 10,
+          yspd: 0,
+          xspd: 1.06,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x - 100,
+          y: getActualCenter().y,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x + 100,
+          y: getActualCenter().y,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: roomWidth / 2 - 20,
+          yvary: 2,
+          xvary: 4,
+          yspd: 1.06,
+          xspd: 1,
+        },
+      },
+    ],
+  },
+  {
+    hazards: putItems({
+      xAmount: 6,
+      yAmount: 6,
+      shouldPlace: (i, j, xAmnt, yAmnt) => {
+        return (
+          (i === 1 && j === 1) ||
+          (i === 1 && j === yAmnt) ||
+          (i === xAmnt && j === 1) ||
+          (i === xAmnt && j === yAmnt)
+        );
+      },
+      itemHeight: 17,
+      itemWidth: 17,
+      itemName: "block",
+    }),
+    enemies: [
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y + 100,
+          r: roomWidth / 2 - 40,
+          yvary: 10,
+          yspd: 0,
+          xspd: 2.5,
+          special: true,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y - 100,
+          r: roomWidth / 2 - 40,
+          yvary: 10,
+          yspd: 0,
+          xspd: -1.5,
+          special: true,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x - roomWidth / 2 - 65,
+          y: getActualCenter().y,
+          r: roomWidth / 2 - 40,
+          xvary: 10,
+          yspd: 1.5,
+          xspd: 0,
+          special: true,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x + 18,
+          y: getActualCenter().y,
+          r: roomWidth / 2 - 40,
+          xvary: 10,
+          yspd: -1.5,
+          xspd: 0,
+          special: true,
+        },
+      },
+    ],
+  },
+  {
+    hazards: putItems({
+      xAmount: 13,
+      yAmount: 13,
+      shouldPlace: (i, j, xAmnt, yAmnt) => {
+        return !((i + j - 1) % 4);
+      },
+      itemHeight: 16,
+      itemWidth: 16,
+      itemName: "spike",
+    }),
+    enemies: [
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x + 100,
+          y: getActualCenter().y,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x - 100,
+          y: getActualCenter().y,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: roomWidth / 2 - 40,
+          xvary: 1,
+          yvary: 5,
+          yspd: 1,
+          xspd: 1,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y + 100,
+        },
+      },
+    ],
+  },
+  {
+    hazards: [
+      ...putItems({
+        y: getActualCenter().y - 75,
+        xAmount: 2,
+        yAmount: 2,
+        shouldPlace: (i, j, xAmnt, yAmnt) => {
+          return (i + j) % 2;
+        },
+        itemHeight: 17,
+        itemWidth: 17,
+        itemName: "block",
+      }),
+      ...putItems({
+        y: getActualCenter().y + 75,
+        xAmount: 2,
+        yAmount: 2,
+        shouldPlace: (i, j, xAmnt, yAmnt) => {
+          return (i + j - 1) % 2;
+        },
+        itemHeight: 17,
+        itemWidth: 17,
+        itemName: "block",
+      }),
+      ...putItems({
+        x: getActualCenter().x - 75,
+        xAmount: 2,
+        yAmount: 2,
+        shouldPlace: (i, j, xAmnt, yAmnt) => {
+          return (i + j) % 2;
+        },
+        itemHeight: 17,
+        itemWidth: 17,
+        itemName: "block",
+      }),
+      ...putItems({
+        x: getActualCenter().x + 75,
+        xAmount: 2,
+        yAmount: 2,
+        shouldPlace: (i, j, xAmnt, yAmnt) => {
+          return (i + j) % 2;
+        },
+        itemHeight: 17,
+        itemWidth: 17,
+        itemName: "block",
+      }),
+    ],
+    enemies: [
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x + 100,
+          y: getActualCenter().y,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x - 100,
+          y: getActualCenter().y,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y + 100,
+        },
+      },
+      {
+        name: "ghostDude",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y - 100,
+        },
+      },
+    ],
+  },
 ];
 
 export const addGameManager = () => {
@@ -364,7 +670,7 @@ export const addGameManager = () => {
     "gm",
     {
       score: 0,
-      currWave: 3,
+      currWave: 7,
       currWaveSpawned: false,
       currEntities: [],
       spawnGap: 120,
@@ -380,7 +686,7 @@ export const addGameManager = () => {
       hitName: "",
       speedUp: false,
       speedUpTimer: 0,
-      speedUpLimit: 200,
+      speedUpLimit: 1000,
       fxBg: null,
     },
     {
@@ -433,6 +739,10 @@ export const addGameManager = () => {
                 e.currEntities.push(addSkeleHead(enemy.props));
                 break;
               }
+              case "ghostDude": {
+                e.currEntities.push(addGhostDude(enemy.props));
+                break;
+              }
             }
           });
 
@@ -452,7 +762,7 @@ export const addGameManager = () => {
           e.triggerPlay = true;
         }
 
-        let noOfEnemies = get("enemy")?.length || 0;
+        let noOfEnemies = get("enemy")?.length || 1;
         if (noOfEnemies <= 0 && e.currWave < waves.length) {
           e.speedUp = false;
           e.speedUpTimer = 0;
