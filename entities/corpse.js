@@ -38,8 +38,8 @@ export const addCorpse = ({
       update: (e) => {
         if (dieWithPassion) {
           e.unuse("color");
-          e.pos.x += lengthdir_x(2, e.dir + e.randx) * (isPlayer ? 1.5 : 3);
-          e.pos.y += lengthdir_y(2, e.dir + e.randy) * (isPlayer ? 1.5 : 3);
+          e.pos.x += lengthdir_x(3, e.dir + e.randx) * (isPlayer ? 1.5 : 3);
+          e.pos.y += lengthdir_y(3, e.dir + e.randy) * (isPlayer ? 1.5 : 3);
           e.rot += isPlayer ? 20 : 40;
           e.use(rotate(e.rot));
 

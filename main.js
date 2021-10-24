@@ -5,7 +5,7 @@ import { addPlayer } from "./entities/player.js";
 import { addHead } from "./entities/head.js";
 import { addChargerLine } from "./entities/charger.js";
 import { loadResources } from "./loadResources.js";
-import { roomWidth, uiOffset } from "./utils/constants.js";
+import { roomHeight, roomWidth, uiOffset } from "./utils/constants.js";
 import { addSingleHealth } from "./entities/ui/health.js";
 import { addHealthManager } from "./entities/ui/healthManager.js";
 import { addPoof } from "./entities/poof.js";
@@ -15,8 +15,6 @@ import { addScoreIndicator } from "./entities/ui/scoreIndicator.js";
 import { addGameOverScreen } from "./entities/ui/gameOverScreen.js";
 import { addCorpse } from "./entities/corpse.js";
 import { addDust } from "./entities/dust.js";
-import { addBlock } from "./entities/block.js";
-import { addGhostDude } from "./entities/enemies/ghostDude.js";
 
 // general constants
 let shootRadius = 40;
@@ -31,7 +29,38 @@ loadResources();
 
 scene("game", () => {
   // init layers
-  layers(["bg", "corpse", "dust", "game", "ui", "uiOverlay"], "game");
+  layers(["fxbg", "bg", "corpse", "dust", "game", "ui", "uiOverlay"], "game");
+
+  // add fxbg for fx
+  let fxBg = add([
+    rect(roomWidth + uiOffset, roomHeight + uiOffset),
+    layer("fxbg"),
+    origin("topleft"),
+    color(255, 255, 255),
+    opacity(0),
+    {
+      triggerfx: false,
+      flashTimer: 0,
+    },
+    {
+      update: (e) => {
+        if (e.triggerfx) {
+          e.flashTimer++;
+          if (e.flashTimer >= 50) {
+            e.flashTimer = 0;
+            e.triggerfx = false;
+          }
+          if (e.flashTimer % 10 < 5) {
+            e.use(opacity(0.2));
+          } else {
+            e.use(opacity(0));
+          }
+        } else {
+          e.use(opacity(0));
+        }
+      },
+    },
+  ]);
 
   // add bg
   add([
@@ -41,7 +70,8 @@ scene("game", () => {
   ]);
 
   // add game manager
-  let gm = addGameManager();
+  let gm = addGameManager(fxBg);
+  gm.fxBg = fxBg;
   addScoreIndicator({
     x: roomWidth + uiOffset / 2,
     y: uiOffset / 2,
@@ -97,8 +127,6 @@ scene("game", () => {
     b.vspd = 0;
   });
 
-  addGhostDude({ x: getActualCenter().x + 70, y: getActualCenter().y });
-
   const sleep = (k) => {
     // let t = new Date().valueOf() + k;
     // while (new Date().valueOf() < t) {}
@@ -119,13 +147,25 @@ scene("game", () => {
     }
   });
 
-  collides("hitBox", "block", (a) => {
+  collides("hitBox", "block", (a, b) => {
     a.parent.pushBack = true;
     if (Math.abs(a.parent.hspd) > Math.abs(a.parent.vspd)) {
       a.parent.pushBackDir = 180 - a.parent.dir;
     } else {
       a.parent.pushBackDir = -a.parent.dir;
     }
+
+    if (a.parent.is("ghostDude") && a.parent.shooting) {
+      if (Math.abs(a.parent.hspd) > Math.abs(a.parent.vspd)) {
+        a.parent.dirToShoot = 180 - a.parent.dirToShoot;
+      } else {
+        a.parent.dirToShoot = -a.parent.dirToShoot;
+      }
+      a.parent.xscale = 1.2;
+      a.parent.yscale = 1.2;
+    }
+    b.xscale = 1.2;
+    b.yscale = 1.2;
 
     a.parent.spd = 1;
   });

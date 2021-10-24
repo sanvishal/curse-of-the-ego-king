@@ -97,7 +97,7 @@ export const addSkeleHead = ({
           }
         }
 
-        e.shootFireballTimer -= 1 * e.playing;
+        e.shootFireballTimer -= (gm.speedUp ? 2 : 1.5) * e.playing;
         if (e.shootFireballTimer <= 0) {
           if (e.shootFireballTimer === 0) {
             e.xscale = 1.3;
@@ -109,7 +109,7 @@ export const addSkeleHead = ({
                 player.pos.x + rand(-20, 20),
                 player.pos.y + rand(-20, 20)
               ).angle(e.pos),
-              spd: 20,
+              spd: 25,
             });
           }
           e.shootFireballTimer = e.maxShootTimer;
@@ -162,12 +162,15 @@ export const addSkeleHead = ({
         let score = skeleHead.baseScore;
         if (head.hitWall) {
           score += 10;
+          gm.hitName = "BACK SHOT +10";
         }
         if (skeleHead.dieWithPassion) {
           score += 5;
+          gm.hitName = "SUPER SHOT +5";
         }
         if (skeleHead.dieWithPassion && head.hitWall) {
           score += 15;
+          gm.hitName = "SUPER BACK SHOT +15";
         }
         score = score * gm.combo;
         gm.combo++;
@@ -186,8 +189,6 @@ export const addSkeleHead = ({
       },
     },
   ]);
-
-  console.log(skeleHead);
 
   let hittable = addHittable({
     parent: skeleHead,

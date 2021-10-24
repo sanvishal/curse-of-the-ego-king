@@ -1,3 +1,4 @@
+import { lengthdir_x, lengthdir_y } from "../utils/helpers.js";
 import { addDust } from "./dust.js";
 
 export const addFireball = ({ x, y, dir, spd }) => {

@@ -46,7 +46,7 @@ export const addGhostDude = ({ x, y }) => {
       shooting: false,
       dirToShoot: 0,
       shootSpeed: 5,
-      triggerShootTimer: 500,
+      triggerShootTimer: 400,
       rot: 0,
     },
     {
@@ -83,7 +83,7 @@ export const addGhostDude = ({ x, y }) => {
 
         e.shootTimer += 1 * e.playing;
         if (e.shootTimer >= e.triggerShootTimer - 50) {
-          e.rot += 30;
+          e.rot += 40;
           if (Math.random() < 0.7) {
             addDust({
               x: e.pos.x + rand(-6, 6),
@@ -147,7 +147,11 @@ export const addGhostDude = ({ x, y }) => {
           e.triggerShootTimer = rand(260, 400);
           e.shootTimer = 0;
           e.rot = 0;
-          shake(1);
+          if (Math.abs(e.hspd) > Math.abs(e.vspd)) {
+            e.hspd = -e.hspd;
+          } else {
+            e.vspd = -e.vspd;
+          }
         }
 
         e.pos.x = clamp(
@@ -179,15 +183,19 @@ export const addGhostDude = ({ x, y }) => {
         let score = ghost.baseScore;
         if (head.hitWall) {
           score += 10;
+          gm.hitName = "BACK SHOT +10";
         }
         if (ghost.dieWithPassion) {
           score += 5;
+          gm.hitName = "SUPER SHOT +5";
         }
         if (ghost.dieWithPassion && head.hitWall) {
           score += 15;
+          gm.hitName = "SUPER BACK SHOT +15";
         }
         if (ghost.specialHit) {
           score += 25;
+          gm.hitName = "SPECIAL SHOT +25";
         }
         score = score * gm.combo;
         gm.combo++;

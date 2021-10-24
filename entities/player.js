@@ -71,12 +71,13 @@ export const addPlayer = () => {
       invincibleTimer: 0,
       invincibleTime: 70,
       swaySpeed: 0.07,
+      swayAmount: -10,
       t: 0.5,
       ang: 0,
       walkTimer: 0,
       activateRing: false,
       awayTimer: 0,
-      playing: true,
+      playing: false,
       isDead: false,
       damagePlayerTrigger: false,
       damagePlayerTimer: 0,
@@ -103,7 +104,7 @@ export const addPlayer = () => {
         }
 
         e.t = clamp(e.t, 0, 1);
-        e.ang = lerp(-10, 10, e.t);
+        e.ang = lerp(-e.swayAmount, e.swayAmount, e.t);
         e.use(rotate(e.ang));
 
         // prevent moving in diagonals with extra speed

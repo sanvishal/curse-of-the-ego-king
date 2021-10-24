@@ -59,8 +59,8 @@ export const addSlime = ({ x, y }) => {
         );
         e.hspd = lengthdir_x(e.spd, e.dir);
         e.vspd = lengthdir_y(e.spd, e.dir);
-        e.pos.x += e.hspd * e.playing;
-        e.pos.y += e.vspd * e.playing;
+        e.pos.x += e.hspd * e.playing * (gm.speedUp ? 1.34 : 1);
+        e.pos.y += e.vspd * e.playing * (gm.speedUp ? 1.34 : 1);
 
         if (e.pushBack) {
           e.pushBackTimer -= 1;
@@ -128,12 +128,15 @@ export const addSlime = ({ x, y }) => {
         let score = slime.baseScore;
         if (head.hitWall) {
           score += 10;
+          gm.hitName = "BACK SHOT +10";
         }
         if (slime.dieWithPassion) {
           score += 5;
+          gm.hitName = "SUPER SHOT +5";
         }
         if (slime.dieWithPassion && head.hitWall) {
           score += 15;
+          gm.hitName = "SUPER BACK SHOT +15";
         }
         score = score * gm.combo;
         gm.combo++;

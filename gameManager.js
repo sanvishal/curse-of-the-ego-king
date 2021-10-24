@@ -6,6 +6,7 @@ spike traps - spikes at the bottom, you can't break it - 2
 auto shooter - a machine that shoots projectiles in four directions, you can break it but hard to break - 3
 */
 
+import { addBlock } from "./entities/block.js";
 import { addDust } from "./entities/dust.js";
 import { addSkeleHead } from "./entities/enemies/skeleHead.js";
 import { addSlime } from "./entities/enemies/slime.js";
@@ -13,33 +14,42 @@ import { addSpike } from "./entities/enemies/spike.js";
 import { getHead } from "./entities/head.js";
 import { getPlayer } from "./entities/player.js";
 import { uiOffset, roomWidth, roomHeight } from "./utils/constants.js";
-import { clamp, getActualCenter } from "./utils/helpers.js";
+import {
+  clamp,
+  getActualCenter,
+  getRandomArbitrary,
+  lengthdir_x,
+  lengthdir_y,
+} from "./utils/helpers.js";
 
-function getRandomArbitrary(min, max) {
-  return Math.random() * (max - min) + min;
-}
 let randDeg = getRandomArbitrary(0, 360);
 
-const putSpikes = ({
+const putItems = ({
   xAmount,
   yAmount,
   x = getActualCenter().x,
   y = getActualCenter().y,
   shouldPlace,
+  itemName,
+  itemWidth,
+  itemHeight,
 }) => {
-  let spikes = [];
-  let spikeSize = 16;
-  let startAtX = x - (xAmount * spikeSize) / 2 + 10;
-  let startAtY = y - (yAmount * spikeSize) / 2 + 10;
+  let items = [];
+  let startAtX = x - (xAmount * itemWidth) / 2 + 10;
+  let startAtY = y - (yAmount * itemHeight) / 2 + 10;
   let iCount = 0;
   let jCount = 0;
-  for (let i = startAtX; i < startAtX + xAmount * spikeSize; i += spikeSize) {
+  for (let i = startAtX; i < startAtX + xAmount * itemWidth; i += itemWidth) {
     iCount++;
-    for (let j = startAtY; j < startAtY + yAmount * spikeSize; j += spikeSize) {
+    for (
+      let j = startAtY;
+      j < startAtY + yAmount * itemHeight;
+      j += itemHeight
+    ) {
       jCount++;
-      if (shouldPlace(iCount, jCount)) {
-        spikes.push({
-          name: "spike",
+      if (shouldPlace(iCount, jCount, xAmount, yAmount)) {
+        items.push({
+          name: itemName,
           props: {
             x: i,
             y: j,
@@ -49,7 +59,7 @@ const putSpikes = ({
     }
     jCount = 0;
   }
-  return spikes;
+  return items;
 };
 
 const waves = [
@@ -103,12 +113,15 @@ const waves = [
     ],
   },
   {
-    hazards: putSpikes({
+    hazards: putItems({
       xAmount: 8,
       yAmount: 8,
-      shouldPlace: (i, j) => {
-        return i === 1 || j === 1 || i === 8 || j === 8;
+      shouldPlace: (i, j, xAmnt, yAmnt) => {
+        return i === 1 || j === 1 || i === xAmnt || j === yAmnt;
       },
+      itemHeight: 16,
+      itemWidth: 16,
+      itemName: "spike",
     }),
     enemies: [
       {
@@ -145,6 +158,112 @@ const waves = [
           yvary: 1,
           xspd: -1,
           yspd: -1,
+        },
+      },
+    ],
+  },
+  {
+    hazards: putItems({
+      xAmount: 7,
+      yAmount: 7,
+      shouldPlace: (i, j, xAmnt, yAmnt) => {
+        return (
+          (i === 1 && j === 1) ||
+          (i === 1 && j === yAmnt) ||
+          (i === xAmnt && j === 1) ||
+          (i === xAmnt && j === yAmnt)
+        );
+      },
+      itemHeight: 17,
+      itemWidth: 17,
+      itemName: "block",
+    }),
+    enemies: [
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: 50,
+          xvary: 1,
+          yvary: 2,
+          xspd: 1,
+          yspd: 1,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: roomHeight - 150,
+          xvary: 2,
+          yvary: 2,
+          xspd: -1,
+          yspd: -1,
+        },
+      },
+      {
+        name: "skeleHead",
+        props: {
+          x: getActualCenter().x,
+          y: getActualCenter().y,
+          r: 70,
+          xvary: 3,
+          yvary: 1,
+          xspd: -1,
+          yspd: -1,
+        },
+      },
+      {
+        name: "slime",
+        props: {
+          x:
+            getActualCenter().x +
+            lengthdir_x(
+              getRandomArbitrary(26, 100),
+              getRandomArbitrary(0, 360)
+            ),
+          y:
+            getActualCenter().y +
+            lengthdir_y(
+              getRandomArbitrary(26, 100),
+              getRandomArbitrary(0, 360)
+            ),
+        },
+      },
+      {
+        name: "slime",
+        props: {
+          x:
+            getActualCenter().x +
+            lengthdir_x(
+              getRandomArbitrary(26, 100),
+              getRandomArbitrary(0, 360)
+            ),
+          y:
+            getActualCenter().y +
+            lengthdir_y(
+              getRandomArbitrary(26, 100),
+              getRandomArbitrary(0, 360)
+            ),
+        },
+      },
+      {
+        name: "slime",
+        props: {
+          x:
+            getActualCenter().x +
+            lengthdir_x(
+              getRandomArbitrary(26, 100),
+              getRandomArbitrary(0, 360)
+            ),
+          y:
+            getActualCenter().y +
+            lengthdir_y(
+              getRandomArbitrary(26, 100),
+              getRandomArbitrary(0, 360)
+            ),
         },
       },
     ],
@@ -245,10 +364,10 @@ export const addGameManager = () => {
     "gm",
     {
       score: 0,
-      currWave: 0,
+      currWave: 3,
       currWaveSpawned: false,
       currEntities: [],
-      spawnGap: 200,
+      spawnGap: 120,
       triggerPlay: false,
       triggerNextWave: false,
       nextWaveGap: 300,
@@ -258,6 +377,11 @@ export const addGameManager = () => {
       maxCoolDown: 670,
       comboCoolDown: 670,
       playerIsDead: false,
+      hitName: "",
+      speedUp: false,
+      speedUpTimer: 0,
+      speedUpLimit: 200,
+      fxBg: null,
     },
     {
       update: (e) => {
@@ -269,13 +393,27 @@ export const addGameManager = () => {
           head = getHead();
         }
 
-        if (e.triggerCombo) {
+        if (e.triggerCombo && player.playing) {
           e.comboCoolDown -= clamp(e.combo, 1, 3);
           if (e.comboCoolDown <= 0) {
             e.triggerCombo = false;
             e.combo = 1;
             gm.trigger("updateScoreIndicator");
             e.comboCoolDown = e.maxCoolDown;
+          }
+        }
+
+        if (player.playing) {
+          if (!e.speedUp) {
+            e.speedUpTimer++;
+            if (e.speedUpTimer >= e.speedUpLimit) {
+              e.speedUp = true;
+              e.speedUpTimer = 0;
+              if (e.fxBg) {
+                e.fxBg.triggerfx = true;
+                gm.hitName = "SPEED UP!";
+              }
+            }
           }
         }
 
@@ -297,10 +435,15 @@ export const addGameManager = () => {
               }
             }
           });
+
           hazards?.forEach((hazard) => {
             switch (hazard?.name) {
               case "spike": {
                 e.currEntities.push(addSpike(hazard.props));
+                break;
+              }
+              case "block": {
+                e.currEntities.push(addBlock(hazard.props));
                 break;
               }
             }
@@ -311,6 +454,8 @@ export const addGameManager = () => {
 
         let noOfEnemies = get("enemy")?.length || 0;
         if (noOfEnemies <= 0 && e.currWave < waves.length) {
+          e.speedUp = false;
+          e.speedUpTimer = 0;
           e.comboCoolDown = e.maxCoolDown;
           e.nextWaveGap--;
           // show wave complete
@@ -365,8 +510,6 @@ export const addGameManager = () => {
             e.currWave++;
             waveBanner.text = "WAVE " + e.currWave;
             waveBanner.open();
-            player.playing = true;
-            head.playing = true;
             e.nextWaveGap = 300;
             e.triggerNextWave = true;
             e.currWaveSpawned = false;
@@ -378,7 +521,9 @@ export const addGameManager = () => {
           e.spawnGap--;
           if (e.spawnGap <= 0) {
             e.triggerPlay = false;
-            e.spawnGap = 200;
+            e.spawnGap = 120;
+            player.playing = true;
+            head.playing = true;
             player.hurt();
             e.currEntities?.forEach((ent) => {
               ent.playing = true;

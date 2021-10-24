@@ -93,6 +93,30 @@ export const addScoreIndicator = ({ x, y }) => {
         });
         popTransform();
 
+        // draw hit name
+        pushTransform();
+        pushTranslate(uiOffset / 2 - uiOffset / 4 + 5, si.pos.y + uiOffset / 4);
+        drawText({
+          text: gm.hitName,
+          font: "sink",
+          size: 8,
+          origin: "left",
+          opacity: gm.triggerCombo ? 0.7 : gm.hitName === "SPEED UP!" ? 1 : 0.2,
+          transform: (i) => {
+            return {
+              pos: vec2(
+                -i * 6 +
+                  (gm.triggerCombo || gm.hitName === "SPEED UP!"
+                    ? wave(-1, 1, 5 * (time() + i))
+                    : 0),
+                i * 10
+              ),
+              color: gm.hitName === "SPEED UP!" ? col : rgb(255, 255, 255),
+            };
+          },
+        });
+        popTransform();
+
         // draw score
         pushTransform();
         pushTranslate(si.pos.x, si.pos.y);

@@ -60,3 +60,7 @@ export function getActualCenter() {
     y: roomHeight / 2 + uiOffset - uiOffset / 4,
   };
 }
+
+export function getRandomArbitrary(min, max) {
+  return Math.random() * (max - min) + min;
+}
