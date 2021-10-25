@@ -27,6 +27,7 @@ import { addFireball } from "./entities/fireball.js";
 import { addHealthPickup } from "./entities/healthPickup.js";
 import { addScoreBubble } from "./entities/scoreBubble.js";
 import { addSnakeBoss } from "./entities/enemies/snakeBoss.js";
+import { addDialogManager } from "./dialogManager.js";
 
 // general constants
 let shootRadius = 40;
@@ -89,6 +90,9 @@ scene("game", () => {
     y: uiOffset / 2,
   });
 
+  // add dialog manager
+  addDialogManager();
+
   // add health manager
   let healthManager = addHealthManager();
 
@@ -115,7 +119,7 @@ scene("game", () => {
   collides("hitBox", "hitBox", (a, b) => {
     a.parent.pushBack = true;
     a.parent.pushBackDir = a.pos.angle(b.pos);
-    if (!a.parent.is("skeleHeadBoss")) {
+    if (!a.parent.is("boss")) {
       a.parent.spd = 1;
     }
   });
@@ -228,7 +232,9 @@ scene("game", () => {
       // on which dir to push back?
       a.parent.pushBackDir = head.dir;
       // how much speed to push?
-      a.parent.spd = mapc(head.spd * 3, 0, 70, 1.4, 1.6);
+      if (!a.parent.is("boss")) {
+        a.parent.spd = mapc(head.spd * 3, 0, 70, 1.4, 1.6);
+      }
       // glub
       a.parent.xscale = 1.5;
       a.parent.yscale = 1.5;
@@ -250,7 +256,7 @@ scene("game", () => {
     }
     if (head.spd >= 70) {
       addHitLines({ x: head.pos.x, y: head.pos.y });
-      sleep(70);
+      sleep(gm.currWave === 9 ? 20 : 70);
       shake(2);
       if (!head.hitWall) {
         head.spd /= 1.3;
@@ -259,7 +265,9 @@ scene("game", () => {
       }
       a.parent.pushBack = true;
       a.parent.pushBackDir = head.dir;
-      a.parent.spd = mapc(head.spd * 3, 0, 70, 1.4, 1.6);
+      if (!a.parent.is("boss")) {
+        a.parent.spd = mapc(head.spd * 3, 0, 70, 1.4, 1.6);
+      }
       a.parent.xscale = 1.5;
       a.parent.yscale = 1.5;
       if (a.parent.is("ghostDude")) {
@@ -274,7 +282,17 @@ scene("game", () => {
         }
       } else {
         a.parent.hurt({ dieWithPassion: true });
-        a.parent.health -= 5;
+        if (a.parent.is("boss")) {
+          if (a.parent.is("skeleHeadBossHead")) {
+            gm.bossHealth -= 8;
+          }
+          if (a.parent.is("skeleHeadBoss")) {
+            gm.bossHealth -= 5;
+          }
+          gm.bossHealth -= 5;
+        } else {
+          a.parent.health -= 5;
+        }
       }
       if (a.parent.health >= 0) {
         if (Math.abs(head.hspd) > Math.abs(head.vspd)) {
@@ -324,15 +342,26 @@ scene("game", () => {
       addPoof({ x: a.pos.x, y: a.pos.y });
       destroy(b);
       a.parent.hurt({ dieWithPassion: true, hitByProjectile: true });
-      a.parent.health -= 1;
       gm.hitName = "DEFLECT HIT!";
+      if (a.parent.is("boss")) {
+        if (a.parent.is("skeleHeadBossHead")) {
+          gm.bossHealth -= 13;
+        }
+        if (a.parent.is("skeleHeadBoss")) {
+          gm.bossHealth -= 6;
+        }
+      } else {
+        a.parent.health -= 1;
+      }
     }
   });
 
-  player.collides("enemy", () => {
+  player.collides("enemy", (a) => {
     if (player.invincibleTimer === 0) {
-      player.hurt();
-      if (player.playing) {
+      if (a.parent.playing) {
+        player.hurt();
+      }
+      if (player.playing && a.parent.playing) {
         healthManager.decreaseHealth(1);
         healthManager.trigger("updateHealthBar");
       }
@@ -419,7 +448,7 @@ scene("game", () => {
     }
   });
 
-  addSnakeBoss({ x: getActualCenter().x + 50, y: getActualCenter().y });
+  // addSnakeBoss({ x: getActualCenter().x + 50, y: getActualCenter().y });
 
   // kick head with charged power
   keyRelease("z", () => {

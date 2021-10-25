@@ -1,5 +1,10 @@
 import { getGameManager } from "../../gameManager.js";
-import { roomHeight, roomWidth, uiOffset } from "../../utils/constants.js";
+import {
+  bossHealth,
+  roomHeight,
+  roomWidth,
+  uiOffset,
+} from "../../utils/constants.js";
 import {
   clamp,
   cos,
@@ -9,16 +14,27 @@ import {
   rLerp,
   sin,
 } from "../../utils/helpers.js";
+import { addCorpse } from "../corpse.js";
 import { addDust } from "../dust.js";
 import { addFireball } from "../fireball.js";
 import { getHead } from "../head.js";
 import { addHittable } from "../hittable.js";
 import { getPlayer } from "../player.js";
+import { addScoreBubble } from "../scoreBubble.js";
+import { getHealthManager } from "../ui/healthManager.js";
 
-export const addSnakeBossBodyPart = ({ x, y, isHead = false }) => {
+export const addSnakeBossBodyPart = ({
+  x,
+  y,
+  isHead = false,
+  tag,
+  name,
+  special = false,
+}) => {
   let head = getHead();
   let player = getPlayer();
   let gm = getGameManager();
+  let hm = getHealthManager();
 
   function angleDiff(a1, a2) {
     let phi = Math.abs(a1 - a2) % 360;
@@ -27,13 +43,14 @@ export const addSnakeBossBodyPart = ({ x, y, isHead = false }) => {
   }
 
   let bodyPart = add([
-    sprite("sprSkeleHead"),
+    sprite(special ? "sprSplSkeleHead" : "sprSkeleHead"),
     layer("game"),
     pos(x, y),
     { hitBox: null },
     area(),
-    "skeleHeadBossHead",
-    "skeleHeadBoss",
+    "boss",
+    `${name}`,
+    tag,
     origin("center"),
     {
       dir: 100,
@@ -47,7 +64,6 @@ export const addSnakeBossBodyPart = ({ x, y, isHead = false }) => {
       xscale: 1,
       yscale: 1,
       targetTimer: 400,
-      health: 7,
       isHurt: false,
       hurtFrame: 10,
       shootFireballTimer: 300,
@@ -56,13 +72,13 @@ export const addSnakeBossBodyPart = ({ x, y, isHead = false }) => {
       baseScore: 25,
       specialBaseScore: 35,
       playing: true,
-      special: false,
+      special,
       normalFireRate: 1,
       specialFireRate: 0.5,
       hitByProjectile: false,
       isHead,
       parent: null,
-      minClampDist: 12,
+      minClampDist: 10,
       turnDir: 0,
       turnTimer: 1,
       turnTimerTarget: 700,
@@ -81,8 +97,8 @@ export const addSnakeBossBodyPart = ({ x, y, isHead = false }) => {
       },
       update: (e) => {
         if (e.isHead) {
-          e.hspd += lengthdir_x(e.spd, e.dir);
-          e.vspd += lengthdir_y(e.spd, e.dir);
+          e.hspd += lengthdir_x(e.spd, e.dir) * e.playing;
+          e.vspd += lengthdir_y(e.spd, e.dir) * e.playing;
 
           e.hspd = lerp(e.hspd, 0, 0.2);
           e.vspd = lerp(e.vspd, 0, 0.2);
@@ -116,11 +132,19 @@ export const addSnakeBossBodyPart = ({ x, y, isHead = false }) => {
         //     e.special ? color(0, 255, 0) : color(255, 0, 0)
         //   );
         // }
-        // e.use(rotate(wave(-15, 15, time() * 4)));
+        if (e.isHead) {
+          e.use(rotate(e.playing * (e.dir + 90) + wave(-15, 15, time() * 4)));
+        } else {
+          e.use(
+            rotate(e.playing * (e.turnDir - 90) + wave(-15, 15, time() * 4))
+          );
+        }
 
         if (e.isHurt) {
           if (e.hurtFrame === 10) {
-            e.health -= 1;
+            if (e.isHead) {
+              gm.bossHealth -= 1;
+            }
           }
           e.hurtFrame -= 1;
           e.use(color(200, 0, 0));
@@ -148,7 +172,7 @@ export const addSnakeBossBodyPart = ({ x, y, isHead = false }) => {
           });
         }
 
-        if (e.health <= 0) {
+        if (gm.bossHealth <= 0) {
           e.die(e?.dieWithPassion);
         }
 
@@ -184,48 +208,29 @@ export const addSnakeBossBodyPart = ({ x, y, isHead = false }) => {
         bodyPart.hitByProjectile = die?.hitByProjectile;
       },
       die: () => {
-        // addCorpse({
-        //   x: skeleHead.pos.x,
-        //   y: skeleHead.pos.y,
-        //   dir: skeleHead.pushBackDir,
-        //   spd: head.spd * 4,
-        //   poofSize: vec2(skeleHead.width, skeleHead.height),
-        //   spr: "sprSkeleHead",
-        //   dieWithPassion: skeleHead.dieWithPassion,
-        // });
-        // let score = skeleHead.special
-        //   ? skeleHead.specialBaseScore
-        //   : skeleHead.baseScore;
-        // if (skeleHead.dieWithPassion) {
-        //   score += 5;
-        //   gm.hitName = "SUPER SHOT +5";
-        // }
-        // if (head.hitWall) {
-        //   score += 10;
-        //   gm.hitName = "BACK SHOT +10";
-        // }
-        // if (skeleHead.dieWithPassion && head.hitWall) {
-        //   score += 15;
-        //   gm.hitName = "SUPER BACK SHOT +15";
-        // }
-        // if (skeleHead.hitByProjectile) {
-        //   score += 20;
-        //   gm.hitName = "DEFLECTED SHOT +15";
-        // }
-        // score = score * gm.combo + (gm.speedUp ? 15 : 0);
-        // gm.combo++;
-        // gm.comboCoolDown = gm.maxCoolDown;
-        // gm.triggerCombo = true;
-        // addScoreBubble({
-        //   x: head.pos.x,
-        //   y: head.pos.y,
-        //   amount: score,
-        // });
-        // gm.increaseScore(score);
-        // if (skeleHead.hitBox) {
-        //   destroy(skeleHead.hitBox);
-        // }
-        // destroy(skeleHead);
+        addCorpse({
+          x: bodyPart.pos.x,
+          y: bodyPart.pos.y,
+          dir: bodyPart.pushBackDir,
+          spd: head.spd * 4,
+          poofSize: vec2(bodyPart.width, bodyPart.height),
+          spr: "sprSkeleHead",
+          dieWithPassion: bodyPart.dieWithPassion,
+        });
+        gm.combo++;
+        gm.comboCoolDown = gm.maxCoolDown;
+        gm.triggerCombo = true;
+        let score = bodyPart.isHead ? hm.health * 500 * gm.combo : 0;
+        addScoreBubble({
+          x: head.pos.x,
+          y: head.pos.y,
+          amount: bodyPart.isHead ? score : "",
+        });
+        gm.increaseScore(score);
+        if (bodyPart.hitBox) {
+          destroy(bodyPart.hitBox);
+        }
+        destroy(bodyPart);
       },
     },
   ]);

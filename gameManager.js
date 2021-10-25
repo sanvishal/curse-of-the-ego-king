@@ -6,17 +6,28 @@ spike traps - spikes at the bottom, you can't break it - 2
 auto shooter - a machine that shoots projectiles in four directions, you can break it but hard to break - 3
 */
 
+import { getDialogManager } from "./dialogManager.js";
 import { addBlock } from "./entities/block.js";
 import { addDust } from "./entities/dust.js";
 import { addGhostDude } from "./entities/enemies/ghostDude.js";
 import { addSkeleHead } from "./entities/enemies/skeleHead.js";
 import { addSlime } from "./entities/enemies/slime.js";
+import { addSnakeBoss, getSnakeBosss } from "./entities/enemies/snakeBoss.js";
+import { addSnakeBossBodyPart } from "./entities/enemies/snakeBossBodyPart.js";
 import { addSpike } from "./entities/enemies/spike.js";
 import { getHead } from "./entities/head.js";
 import { addHealthPickup } from "./entities/healthPickup.js";
 import { getPlayer } from "./entities/player.js";
-import { uiOffset, roomWidth, roomHeight } from "./utils/constants.js";
+import { getHealthManager } from "./entities/ui/healthManager.js";
+import { addHitLines } from "./entities/ui/hitLines.js";
 import {
+  uiOffset,
+  roomWidth,
+  roomHeight,
+  bossHealth,
+} from "./utils/constants.js";
+import {
+  approach,
   clamp,
   getActualCenter,
   getRandomArbitrary,
@@ -734,13 +745,16 @@ export const addGameManager = () => {
 
   let player = null;
   let head = null;
+  let hm = null;
   let limits = [900, 1000, 1200, 1500, 1900, 2400, 2800, 3200];
+  let boss = null;
+  let dm = getDialogManager();
 
   let gm = add([
     "gm",
     {
       score: 0,
-      currWave: 0,
+      currWave: 9,
       currWaveSpawned: false,
       currEntities: [],
       spawnGap: 120,
@@ -759,6 +773,14 @@ export const addGameManager = () => {
       speedUpLimit: 200,
       fxBg: null,
       putHeartTimer: 0,
+      isBoss: false,
+      bossSpawned: false,
+      bossSpawnTimer: 0,
+      partsJoined: 0,
+      parts: [],
+      partJoinTimer: 1,
+      boss: null,
+      bossHealth: bossHealth,
     },
     {
       update: (e) => {
@@ -829,24 +851,40 @@ export const addGameManager = () => {
               }
             }
           });
+
+          // if (e.currWave === 9) {
+          //   let boss = addSnakeBoss({
+          //     x: getActualCenter().x,
+          //     y: getActualCenter().y - 50,
+          //   });
+          //   boss[0].playing = false;
+          // }
+
+          e.isBoss = e.currWave === 9;
           e.currWaveSpawned = true;
           e.triggerPlay = true;
         }
 
-        let noOfEnemies = get("enemy")?.length || 1;
-        e.putHeartTimer += 1 * player.playing;
-        try {
-          if (e.putHeartTimer === limits[gm.health - 1]) {
-            e.putHeartTimer = 0;
-            if (noOfEnemies > 1) {
-              addHealthPickup({
-                x: rand(uiOffset + 14, roomWidth - uiOffset / 4),
-                y: rand(uiOffset + 20, roomHeight - uiOffset / 4),
-              });
+        if (!hm) {
+          hm = getHealthManager();
+        }
+
+        let noOfEnemies = get("enemy")?.length || 0;
+        if (hm) {
+          e.putHeartTimer += 1 * player.playing;
+          try {
+            if (e.putHeartTimer >= limits[clamp(hm.health, 0, hm.maxHealth)]) {
+              e.putHeartTimer = 0;
+              if (noOfEnemies > 1 || e.currWave === 9) {
+                addHealthPickup({
+                  x: rand(uiOffset + 14, roomWidth - uiOffset / 4),
+                  y: rand(uiOffset + 20, roomHeight - uiOffset / 4),
+                });
+              }
             }
+          } catch (err) {
+            // just to be safe
           }
-        } catch (err) {
-          // just to be safe
         }
 
         if (noOfEnemies <= 0 && e.currWave < waves.length) {
@@ -914,17 +952,131 @@ export const addGameManager = () => {
         }
 
         if (e.triggerPlay) {
-          e.spawnGap--;
-          if (e.spawnGap <= 0) {
-            e.triggerPlay = false;
-            e.spawnGap = 120;
-            e.putHeartTimer = 0;
-            player.playing = true;
-            head.playing = true;
-            player.hurt();
-            e.currEntities?.forEach((ent) => {
-              ent.playing = true;
-            });
+          if (e.isBoss) {
+            if (!e.bossSpawed) {
+              e.bossSpawnTimer++;
+              if (e.bossSpawnTimer === 50) {
+                e.parts.push(
+                  addSnakeBossBodyPart({
+                    x: getActualCenter().x - 100,
+                    y: getActualCenter().y - 90,
+                  })
+                );
+                e.parts.push(
+                  addSnakeBossBodyPart({
+                    x: getActualCenter().x,
+                    y: getActualCenter().y - 90,
+                  })
+                );
+                e.parts.push(
+                  addSnakeBossBodyPart({
+                    x: getActualCenter().x + 100,
+                    y: getActualCenter().y - 90,
+                  })
+                );
+                e.parts.push(
+                  addSnakeBossBodyPart({
+                    x: getActualCenter().x + 100,
+                    y: getActualCenter().y + 100,
+                  })
+                );
+                e.parts.push(
+                  addSnakeBossBodyPart({
+                    x: getActualCenter().x - 100,
+                    y: getActualCenter().y + 100,
+                  })
+                );
+                e.parts.push(
+                  addSnakeBossBodyPart({
+                    x: getActualCenter().x,
+                    y: getActualCenter().y + 100,
+                  })
+                );
+                e.parts.forEach((p) => {
+                  p.playing = false;
+                });
+              }
+
+              if (e.bossSpawnTimer >= 80) {
+                if (Math.random() < 0.5 && e.partsJoined > 0) {
+                  addDust({
+                    x: getActualCenter().x + rand(-10, 10),
+                    y: getActualCenter().y - 60 + rand(-10, 10),
+                    isSpawn: true,
+                  });
+                }
+                if (Math.random() < 0.4) {
+                  addDust({
+                    x: e.parts[e.partsJoined].pos.x + rand(-5, 5),
+                    y: e.parts[e.partsJoined].pos.y + rand(-5, 5),
+                  }).use(color(255, 0, 0));
+                }
+                e.parts[e.partsJoined].pos.x = lerp(
+                  e.parts[e.partsJoined].pos.x,
+                  getActualCenter().x,
+                  0.1
+                );
+                e.parts[e.partsJoined].pos.y = lerp(
+                  e.parts[e.partsJoined].pos.y,
+                  getActualCenter().y - 60,
+                  0.08
+                );
+
+                e.partJoinTimer++;
+                if (
+                  e.partJoinTimer > 60 &&
+                  e.partsJoined < e.parts.length - 1
+                ) {
+                  e.partsJoined++;
+                  e.partJoinTimer = 1;
+                }
+              }
+
+              if (e.bossSpawnTimer === 500) {
+                e.bossSpawed = true;
+                e.fxBg.triggerfx = true;
+                e.parts.forEach((p) => {
+                  destroy(p.hitBox);
+                  destroy(p);
+                });
+                addHitLines({
+                  x: getActualCenter().x,
+                  y: getActualCenter().y - 60,
+                });
+                addSnakeBoss({
+                  x: getActualCenter().x,
+                  y: getActualCenter().y - 60,
+                });
+              }
+            }
+
+            if (e.bossSpawed) {
+              e.spawnGap--;
+              if (e.spawnGap <= 0) {
+                e.triggerPlay = false;
+                e.spawnGap = 120;
+                e.putHeartTimer = 0;
+                player.playing = true;
+                head.playing = true;
+                player.hurt();
+                e.currEntities?.forEach((ent) => {
+                  ent.playing = true;
+                });
+              }
+            }
+          } else {
+            e.spawnGap--;
+            if (e.spawnGap <= 0) {
+              e.triggerPlay = false;
+              e.spawnGap = 120;
+              e.putHeartTimer = 0;
+              player.playing = true;
+              head.playing = true;
+              player.hurt();
+              e.currEntities?.forEach((ent) => {
+                ent.playing = true;
+              });
+            }
           }
         }
       },

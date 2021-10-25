@@ -12,6 +12,12 @@ export const loadResources = () => {
         run: { from: 5, to: 8, speed: 13 },
       },
     },
+    sprWitch: {
+      x: 246,
+      y: 40,
+      width: 20,
+      height: 17,
+    },
     sprHead: {
       x: 0,
       y: 17,

@@ -1,5 +1,10 @@
 import { getGameManager } from "../../gameManager.js";
-import { roomHeight, roomWidth, uiOffset } from "../../utils/constants.js";
+import {
+  bossHealth,
+  roomHeight,
+  roomWidth,
+  uiOffset,
+} from "../../utils/constants.js";
 import { getHead } from "../head.js";
 
 export const addScoreIndicator = ({ x, y }) => {
@@ -116,6 +121,33 @@ export const addScoreIndicator = ({ x, y }) => {
               ),
               color: isSpecial ? col : rgb(255, 255, 255),
             };
+          },
+        });
+        popTransform();
+
+        // draw boss health bar
+        pushTransform();
+        pushTranslate(
+          si.pos.x - roomWidth / 2 - roomWidth / 4 - 5,
+          si.pos.y + uiOffset / 4
+        );
+        drawRect({
+          width: mapc(gm.bossHealth, 0, bossHealth, 0, roomWidth / 2 + 10),
+          height: 3,
+          origin: "left",
+          color: rgb(213, 60, 106),
+          radius: 1,
+        });
+        drawRect({
+          width: mapc(bossHealth, 0, bossHealth, 0, roomWidth / 2 + 10),
+          height: 3,
+          origin: "left",
+          // color: rgb(213, 60, 106),
+          fill: false,
+          radius: 1,
+          outline: {
+            width: 1,
+            color: rgb(255, 255, 255),
           },
         });
         popTransform();
