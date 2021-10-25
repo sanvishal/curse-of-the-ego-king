@@ -1,9 +1,9 @@
-// enemyTypes
+// enemyTypes - depreciated
 /*
 slime - move towards you and touches you, damages you - 0
 flying skele head - moves towards you and stays at a distance and fires a bullet occasionally - 1
 spike traps - spikes at the bottom, you can't break it - 2
-auto shooter - a machine that shoots projectiles in four directions, you can break it but hard to break - 3
+auto shooter - a machine that shoots projectiles in four directions, you can break it but hard to break - 3 // didnt do
 */
 
 import { getDialogManager } from "./dialogManager.js";
@@ -923,7 +923,7 @@ export const addGameManager = () => {
       hitName: "",
       speedUp: false,
       speedUpTimer: 0,
-      speedUpLimit: 200,
+      speedUpLimit: 1200,
       fxBg: null,
       putHeartTimer: 0,
       isBoss: false,
@@ -968,7 +968,7 @@ export const addGameManager = () => {
         }
 
         if (player.playing) {
-          if (!e.speedUp) {
+          if (!e.speedUp && e.currWave !== 9) {
             e.speedUpTimer++;
             if (e.speedUpTimer >= e.speedUpLimit) {
               e.speedUp = true;
@@ -1070,7 +1070,7 @@ export const addGameManager = () => {
           if (e.bossMessageTimer === 10) {
             dm?.say({
               who: "wiggle",
-              what: "*mildly sad* WOOF",
+              what: "*MILDLY SAD*",
               slow: false,
             });
           }

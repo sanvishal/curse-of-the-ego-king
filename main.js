@@ -1,12 +1,6 @@
 import { initKaboom } from "./init.js";
 import { generateLevel } from "./levelGen.js";
-import {
-  clamp,
-  getActualCenter,
-  lengthdir_x,
-  lengthdir_y,
-  sin,
-} from "./utils/helpers.js";
+import { clamp } from "./utils/helpers.js";
 import { addPlayer } from "./entities/player.js";
 import { addHead } from "./entities/head.js";
 import { addChargerLine } from "./entities/charger.js";
@@ -21,12 +15,8 @@ import { addScoreIndicator } from "./entities/ui/scoreIndicator.js";
 import { addGameOverScreen } from "./entities/ui/gameOverScreen.js";
 import { addCorpse } from "./entities/corpse.js";
 import { addDust } from "./entities/dust.js";
-import { addGhostDude } from "./entities/enemies/ghostDude.js";
-import { addSkeleHead } from "./entities/enemies/skeleHead.js";
 import { addFireball } from "./entities/fireball.js";
-import { addHealthPickup } from "./entities/healthPickup.js";
 import { addScoreBubble } from "./entities/scoreBubble.js";
-import { addSnakeBoss } from "./entities/enemies/snakeBoss.js";
 import { addDialogManager } from "./dialogManager.js";
 
 // general constants
@@ -39,6 +29,183 @@ initKaboom();
 
 // load stuff
 loadResources();
+
+scene("menu", () => {
+  add([
+    sprite("sprTitle"),
+    origin("center"),
+    pos(center().x, center().y - 50),
+    scale(2),
+  ]);
+
+  let start = add([
+    "start",
+    area(),
+    rect(100, 20, { radius: 1 }),
+    origin("center"),
+    color(70, 14, 43),
+    pos(center().x, center().y + 40),
+    {
+      update: (e) => {
+        if (e.isHovering()) {
+          e.use(scale(1.06));
+        } else {
+          e.use(scale(1));
+        }
+
+        if (e.isClicked()) {
+          go("story");
+        }
+      },
+    },
+  ]);
+
+  add([
+    text("START", { font: "sink" }),
+    origin("center"),
+    pos(center().x, center().y + 40),
+  ]);
+
+  add([
+    text("how to play?", { font: "sink" }),
+    origin("center"),
+    area(),
+    pos(center().x, center().y + 70),
+    {
+      update: (e) => {
+        if (e.isHovering()) {
+          e.use(scale(1.06));
+        } else {
+          e.use(scale(1));
+        }
+        if (e.isClicked()) {
+          go("help");
+        }
+      },
+    },
+  ]);
+
+  add([
+    text("A GAME BY @vishal1999tk for KAJAM 2021", { font: "sink" }),
+    origin("center"),
+    pos(center().x, roomHeight + uiOffset / 2),
+  ]);
+});
+
+scene("help", () => {
+  let help = [
+    "In the underworld, your detached HUGE head is your weapon",
+    "arrow keys to move, Z to charge your kick",
+    "R to restart if you are dead, F to go fullscreen",
+    "beware of underworld hazards!",
+    "your own head is deadly on bouncing back walls",
+  ];
+  let s = add([
+    {
+      draw: () => {
+        for (let i = 0; i < help.length; i++) {
+          pushTransform();
+          pushTranslate(5, 30 + 30 * i);
+          drawText({
+            text: help[i],
+            origin: "topleft",
+            font: "sink",
+            width: roomWidth + uiOffset / 2 - 5,
+            color: i === 1 || i === 2 ? rgb(213, 60, 106) : rgb(255, 255, 255),
+          });
+          popTransform();
+        }
+      },
+    },
+  ]);
+
+  let start = add([
+    "start",
+    area(),
+    rect(50, 20, { radius: 1 }),
+    origin("center"),
+    color(70, 14, 43),
+    pos(center().x, roomWidth + uiOffset / 2 - 15),
+    {
+      update: (e) => {
+        if (e.isHovering()) {
+          e.use(scale(1.06));
+        } else {
+          e.use(scale(1));
+        }
+
+        if (e.isClicked()) {
+          go("menu");
+        }
+      },
+    },
+  ]);
+
+  add([
+    text("BACK", { font: "sink" }),
+    origin("center"),
+    pos(center().x, roomWidth + uiOffset / 2 - 15),
+  ]);
+});
+
+scene("story", () => {
+  let story = [
+    "there lived a mighty king, with a very HUGE ego",
+    "on one fine day ego king, messes with a witch",
+    "the witch soo pissed off, puts a curse on ego king",
+    "~thy head shall be as HUGE as thy HUGE ego~",
+    "his head literally falls down",
+    "after all this, the ego king still boasts about himself to witch",
+    "the witch casts him to underworld",
+    "you are the ego king",
+  ];
+  let s = add([
+    {
+      draw: () => {
+        for (let i = 0; i < story.length; i++) {
+          pushTransform();
+          pushTranslate(5, 30 + (i === 7 ? 32 : 30) * i);
+          drawText({
+            text: story[i],
+            origin: "topleft",
+            font: "sink",
+            width: roomWidth + uiOffset / 2 - 5,
+            color: i === 3 || i === 7 ? rgb(213, 60, 106) : rgb(255, 255, 255),
+          });
+          popTransform();
+        }
+      },
+    },
+  ]);
+
+  let start = add([
+    "start",
+    area(),
+    rect(50, 20, { radius: 1 }),
+    origin("center"),
+    color(70, 14, 43),
+    pos(roomWidth / 2 + 50, roomWidth + uiOffset / 2 - 15),
+    {
+      update: (e) => {
+        if (e.isHovering()) {
+          e.use(scale(1.06));
+        } else {
+          e.use(scale(1));
+        }
+
+        if (e.isClicked()) {
+          go("game");
+        }
+      },
+    },
+  ]);
+
+  add([
+    text("START", { font: "sink" }),
+    origin("center"),
+    pos(roomWidth / 2 + 50, roomWidth + uiOffset / 2 - 15),
+  ]);
+});
 
 scene("game", () => {
   // init layers
@@ -456,7 +623,7 @@ scene("game", () => {
   gm.on("gameEndScreen", () => {
     gameOverScreen.fadeIn(
       "the curse is broken",
-      "Thanks for playing, let me know what you think :)",
+      "Thanks for playing, let me know what you think",
       true
     );
   });
@@ -498,7 +665,7 @@ scene("game", () => {
   });
 });
 
-go("game");
+go("menu");
 
 // focus canvas
 ready(() => {

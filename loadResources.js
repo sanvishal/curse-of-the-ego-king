@@ -1,6 +1,12 @@
 export const loadResources = () => {
   loadSprite("bgTiles", "sprites/bgsmall.png");
   loadSpriteAtlas("sprites/spritesheet.png", {
+    sprTitle: {
+      x: 67,
+      y: 50,
+      width: 91,
+      height: 28,
+    },
     sprEgoKing: {
       x: 0,
       y: 0,

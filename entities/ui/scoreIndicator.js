@@ -57,7 +57,6 @@ export const addScoreIndicator = ({ x, y }) => {
             }
           });
           si.word = si.letters.map((l) => l.letter).join("");
-          console.log(si.word);
           gm.triggerLetterUpdate = false;
         }
       },

@@ -66,7 +66,6 @@ export const addDialogManager = () => {
             e.thingToSay?.length !== 0
           ) {
             e.saidThing.push(e.thingToSay.shift());
-            console.log(e.saidThing);
           }
           if (
             e.openFor >=
