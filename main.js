@@ -119,13 +119,12 @@ scene("help", () => {
     },
   ]);
 
-  let start = add([
-    "start",
+  add([
     area(),
     rect(50, 20, { radius: 1 }),
     origin("center"),
     color(70, 14, 43),
-    pos(center().x, roomWidth + uiOffset / 2 - 15),
+    pos(center().x - 40, roomWidth + uiOffset / 2 - 15),
     {
       update: (e) => {
         if (e.isHovering()) {
@@ -144,7 +143,35 @@ scene("help", () => {
   add([
     text("BACK", { font: "sink" }),
     origin("center"),
-    pos(center().x, roomWidth + uiOffset / 2 - 15),
+    pos(center().x - 40, roomWidth + uiOffset / 2 - 15),
+  ]);
+
+  add([
+    area(),
+    rect(75, 20, { radius: 1 }),
+    origin("center"),
+    color(70, 14, 43),
+    pos(center().x + 40, roomWidth + uiOffset / 2 - 15),
+    {
+      update: (e) => {
+        if (e.isHovering()) {
+          e.use(scale(1.06));
+        } else {
+          e.use(scale(1));
+        }
+
+        if (e.isClicked()) {
+          setData("WAVE", 0);
+          setData("SCORE", 0);
+        }
+      },
+    },
+  ]);
+
+  add([
+    text("RESET DATA", { font: "sink" }),
+    origin("center"),
+    pos(center().x + 40, roomWidth + uiOffset / 2 - 15),
   ]);
 });
 
@@ -159,7 +186,8 @@ scene("story", () => {
     "the witch casts him to underworld",
     "you are the ego king",
   ];
-  let s = add([
+
+  add([
     {
       draw: () => {
         for (let i = 0; i < story.length; i++) {
