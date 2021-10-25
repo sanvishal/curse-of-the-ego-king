@@ -18,6 +18,12 @@ export const loadResources = () => {
       width: 20,
       height: 17,
     },
+    sprWiggle: {
+      x: 268,
+      y: 40,
+      width: 20,
+      height: 20,
+    },
     sprHead: {
       x: 0,
       y: 17,

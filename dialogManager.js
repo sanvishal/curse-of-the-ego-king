@@ -8,8 +8,12 @@ export const addDialogManager = () => {
         return "sprHead";
       case "witch":
         return "sprWitch";
+      case "wiggle":
+        return "sprWiggle";
     }
   };
+
+  const isUpperCase = (string) => /^[A-Z]*$/.test(string);
 
   let dm = add([
     "dialogManager",
@@ -17,7 +21,7 @@ export const addDialogManager = () => {
     {
       triggerOpen: false,
       openFor: 0,
-      lifetime: 900,
+      lifetime: 400,
       currY: roomHeight + uiOffset + 10,
       openY: roomHeight + uiOffset / 2,
       closeY: roomHeight + uiOffset + 20,
@@ -30,6 +34,8 @@ export const addDialogManager = () => {
       slow: false,
       who: "",
       say: ({ who = "", what = "", slow = false }) => {
+        dm.thingToSay = [];
+        dm.saidThing = [];
         dm.triggerOpen = true;
         dm.openFor = 0;
         dm.thingToSay = what.split(" ");
@@ -47,34 +53,40 @@ export const addDialogManager = () => {
             );
           }
         } else {
+          e.thingToSay = [];
+          e.saidThing = [];
           e.currY = lerp(e.currY, e.closeY, 0.1);
         }
 
         if (e.triggerOpen) {
           e.openFor++;
           if (
-            e.openFor % (e.slow ? 50 : 20) === 0 &&
+            e.openFor > 30 &&
+            e.openFor % (e.slow ? 40 : 10) === 0 &&
             e.thingToSay?.length !== 0
           ) {
             e.saidThing.push(e.thingToSay.shift());
             console.log(e.saidThing);
           }
-          if (e.openFor >= e.lifetime * (e.thingToSay?.length || 1)) {
+          if (
+            e.openFor >=
+            (e.lifetime * (e.thingToSay?.length || 1)) / (e.slow ? 1 : 1.2)
+          ) {
             e.triggerOpen = false;
             e.openFor = 0;
           }
         }
 
         if (
-          e.openFor % (e.slow ? 50 : 20) === 0 &&
+          e.openFor % (e.slow ? 40 : 10) === 0 &&
           e.thingToSay?.length !== 0
         ) {
-          e.xscale = e.who === "witch" ? 1.7 : 1.4;
-          e.yscale = e.who === "witch" ? 1.7 : 1.4;
+          e.xscale = e.who === "witch" ? 1.8 : 1.4;
+          e.yscale = e.who === "witch" ? 1.8 : 1.4;
         }
 
-        e.xscale = lerp(e.xscale, e.who === "witch" ? 1.5 : 1.2, 0.05);
-        e.yscale = lerp(e.yscale, e.who === "witch" ? 1.5 : 1.2, 0.05);
+        e.xscale = lerp(e.xscale, e.who === "witch" ? 1.5 : 1.2, 0.07);
+        e.yscale = lerp(e.yscale, e.who === "witch" ? 1.5 : 1.2, 0.07);
       },
       draw: () => {
         if (dm.who) {
@@ -108,9 +120,19 @@ export const addDialogManager = () => {
             height: 24,
             width: roomWidth - uiOffset * 2 - 10,
             origin: "topleft",
-            transform: (i) => {
+            transform: (i, c) => {
               return {
-                // pos: vec2(0, wave(-0.2, 0.2, (time() + i) * 5)),
+                pos: vec2(
+                  0,
+                  isUpperCase(c) ? wave(-0.7, 0.7, (time() + i) * 7) : 0
+                ),
+                color: isUpperCase(c)
+                  ? rgb(
+                      wave(100, 255, time()),
+                      wave(100, 255, time() + 1),
+                      wave(100, 255, time() + 2)
+                    )
+                  : rgb(255, 255, 255),
               };
             },
           });

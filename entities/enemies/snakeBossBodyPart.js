@@ -36,12 +36,6 @@ export const addSnakeBossBodyPart = ({
   let gm = getGameManager();
   let hm = getHealthManager();
 
-  function angleDiff(a1, a2) {
-    let phi = Math.abs(a1 - a2) % 360;
-    let distance = phi > 180 ? 360 - phi : phi;
-    return distance;
-  }
-
   let bodyPart = add([
     sprite(special ? "sprSplSkeleHead" : "sprSkeleHead"),
     layer("game"),
@@ -173,6 +167,7 @@ export const addSnakeBossBodyPart = ({
         }
 
         if (gm.bossHealth <= 0) {
+          gm.bossDead = true;
           e.die(e?.dieWithPassion);
         }
 

@@ -10,7 +10,15 @@ export const addGameOverScreen = () => {
     layer("uiOverlay"),
     opacity(0),
     origin("topleft"),
-    { op: 0, timer: 50, textop: 0, textTargY: 0 },
+    {
+      op: 0,
+      timer: 50,
+      textop: 0,
+      textTargY: 0,
+      text: "you are not forgiven",
+      secText: "Thanks for playing, let me know what you think :)",
+      special: false,
+    },
     {
       update: (e) => {
         if (e.triggerFadeIn) {
@@ -32,7 +40,7 @@ export const addGameOverScreen = () => {
             getActualCenter().x,
             getActualCenter().y - goScreen.textTargY
           );
-          let text = "you died again";
+          let text = goScreen.text;
           drawText({
             text,
             origin: "center",
@@ -42,18 +50,42 @@ export const addGameOverScreen = () => {
               return {
                 pos: vec2(
                   (i - text.length / 2) * 4,
-                  wave(-1, 1, time() + i * 5)
+                  wave(-1, 1, time() + i * (goScreen.special ? 10 : 5))
                 ),
+                color: goScreen.special
+                  ? rgb(
+                      wave(100, 255, time()),
+                      wave(100, 255, time() + 1),
+                      wave(100, 255, time() + 2)
+                    )
+                  : rgb(255, 255, 255),
               };
             },
+          });
+          popTransform();
+
+          pushTransform();
+          pushTranslate(
+            getActualCenter().x,
+            getActualCenter().y - goScreen.textTargY + 70
+          );
+          drawText({
+            text: goScreen.secText,
+            origin: "center",
+            font: "sink",
+            size: 8,
+            opacity: goScreen.textop,
           });
           popTransform();
         }
       },
     },
     {
-      fadeIn: () => {
+      fadeIn: (text, secText, special) => {
+        goScreen.special = special;
+        goScreen.text = text;
         goScreen.triggerFadeIn = true;
+        goScreen.secText = secText;
       },
     },
   ]);

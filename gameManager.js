@@ -37,6 +37,159 @@ import {
 
 let randDeg = getRandomArbitrary(0, 360);
 
+const getThingToSayOnStart = (wave) => {
+  switch (wave) {
+    case 0:
+      return {
+        what: choose([
+          "this is enough to put you down!",
+          "this should be super easy... for me",
+        ]),
+        slow: false,
+      };
+    case 1:
+      return {
+        what: choose([
+          "behold... my SKELE HEADS!!!",
+          "i summon thee, whatever...",
+          "double the trouble with my SKELE HEADS",
+        ]),
+        slow: false,
+      };
+    case 2:
+      return {
+        what: choose([
+          "step on those weird looking floor for the JOKES, haha",
+          "weird looking tiles?? STEP ON THEM to find out",
+        ]),
+        slow: false,
+      };
+    case 3:
+      return {
+        what: choose([
+          "bounce your head on that thingy",
+          "who's giving you those health pickups!!",
+        ]),
+        slow: false,
+      };
+    case 4:
+      return {
+        what: choose(["behold my GHOST DUDES, figure out what they do"]),
+        slow: false,
+      };
+    case 5:
+      return {
+        what: choose([
+          "behold my... SKELE HEAD PRO MAX",
+          "i summon thee... SKELE HEAD PRO MAX",
+        ]),
+        slow: false,
+      };
+    case 6:
+      return {
+        what: choose([
+          "this is GHOST DUDES playground",
+          "GHOST DUDES are loving it, unlike you",
+          "GHOST DUDES favorite sport is head ball",
+        ]),
+        slow: false,
+      };
+    case 7:
+      return {
+        what: choose([
+          "floor is lava, i only got so much mana",
+          "try standing still, i dare",
+        ]),
+        slow: false,
+      };
+    case 8:
+      return {
+        what: choose(["just say SORRY and this will be over!"]),
+        slow: false,
+      };
+    case 9:
+      return {
+        what: choose(["SWOOOOOOOOOOOOOOOSH"]),
+        slow: true,
+      };
+  }
+};
+
+const getThingToSayOnEnd = (wave) => {
+  switch (wave) {
+    case 0:
+      return {
+        what: choose([
+          "haha.. anyone can win those slimes",
+          "not bad, not good",
+          "jokes on you, there's more to come",
+        ]),
+        slow: false,
+      };
+    case 1:
+      return {
+        what: choose([
+          "you should've lost a health or two",
+          "how are you even walking?",
+        ]),
+        slow: false,
+      };
+    case 2:
+      return {
+        what: choose([
+          "did you stand on those tiles? fun, ain't it?",
+          "not good, not terrible",
+        ]),
+        slow: false,
+      };
+    case 3:
+      return {
+        what: choose([
+          "you should've lost a health or two",
+          "we are just getting started",
+        ]),
+        slow: false,
+      };
+    case 4:
+      return {
+        what: choose([
+          "you should've lost a health or two",
+          "i think GHOST DUDES like your head",
+        ]),
+        slow: false,
+      };
+    case 5:
+      return {
+        what: choose([
+          "you can deflect those green balls?? that's new",
+          "that was hard, ain't it? there's more!",
+        ]),
+        slow: false,
+      };
+    case 6:
+      return {
+        what: choose(["GHOST DUDES favorite sport is head ball"]),
+        slow: false,
+      };
+    case 7:
+      return {
+        what: choose([
+          "you survived that? let's see how you do this...",
+          "this is not looking good, i'll have to pull out the big spells",
+        ]),
+        slow: false,
+      };
+    case 8:
+      return {
+        what: choose([
+          "you can deflect those green balls?? that's new!",
+          "how are you even walking?",
+        ]),
+        slow: false,
+      };
+  }
+};
+
 const putItems = ({
   xAmount,
   yAmount,
@@ -748,13 +901,13 @@ export const addGameManager = () => {
   let hm = null;
   let limits = [900, 1000, 1200, 1500, 1900, 2400, 2800, 3200];
   let boss = null;
-  let dm = getDialogManager();
+  let dm = null;
 
   let gm = add([
     "gm",
     {
-      score: 0,
-      currWave: 9,
+      score: Number(getData("SCORE")) || 0,
+      currWave: Number(getData("WAVE")) || 0,
       currWaveSpawned: false,
       currEntities: [],
       spawnGap: 120,
@@ -781,6 +934,14 @@ export const addGameManager = () => {
       partJoinTimer: 1,
       boss: null,
       bossHealth: bossHealth,
+      bossDead: false,
+      bossMessageTimer: 0,
+      letters: [],
+      triggerLetterUpdate: false,
+      letterToUpdate: "",
+      egoSaidSorry: false,
+      gameEndedTimer: 0,
+      gameOver: false,
     },
     {
       update: (e) => {
@@ -790,6 +951,10 @@ export const addGameManager = () => {
 
         if (!head) {
           head = getHead();
+        }
+
+        if (!dm) {
+          dm = getDialogManager();
         }
 
         if (e.triggerCombo && player.playing) {
@@ -819,6 +984,12 @@ export const addGameManager = () => {
         e.maxCombo = Math.max(e.maxCombo, e.combo);
 
         if (!e.currWaveSpawned) {
+          if (e.currWave !== 9) {
+            dm?.say({
+              who: "witch",
+              ...getThingToSayOnStart(e.currWave),
+            });
+          }
           let thingsToSpawn = waves[e.currWave];
           let enemies = thingsToSpawn?.enemies;
           let hazards = thingsToSpawn?.hazards;
@@ -887,11 +1058,66 @@ export const addGameManager = () => {
           }
         }
 
+        if (e.bossDead) {
+          every("enemy", (enemy) => {
+            if (typeof enemy.parent.die === "function") {
+              enemy.parent.hurt({ dieWithPassion: true });
+              enemy.parent.die();
+            }
+          });
+
+          e.bossMessageTimer++;
+          if (e.bossMessageTimer === 10) {
+            dm?.say({
+              who: "wiggle",
+              what: "*mildly sad* WOOF",
+              slow: false,
+            });
+          }
+
+          if (
+            e.letters?.length === 5 &&
+            !e.egoSaidSorry &&
+            e.bossMessageTimer > 400
+          ) {
+            dm?.say({
+              who: "ego",
+              what: "s..ss..sss..... SORRY",
+              slow: true,
+            });
+            e.egoSaidSorry = true;
+          }
+        }
+
+        if (e.egoSaidSorry) {
+          e.gameEndedTimer++;
+          if (e.gameEndedTimer === 300) {
+            dm?.say({
+              who: "witch",
+              what: "that's what i wanted! an actual SORRY, you are forgiven",
+              slow: false,
+            });
+          }
+
+          if (e.gameEndedTimer === 700) {
+            e.trigger("gameEndScreen");
+            e.gameOver = true;
+          }
+        }
+
         if (noOfEnemies <= 0 && e.currWave < waves.length) {
           e.speedUp = false;
           e.speedUpTimer = 0;
           e.comboCoolDown = e.maxCoolDown;
           e.nextWaveGap--;
+          if (e.nextWaveGap === 299) {
+            if (e.currWave !== 9) {
+              dm?.say({
+                who: "witch",
+                ...getThingToSayOnEnd(e.currWave),
+              });
+            }
+          }
           // show wave complete
           if (e.nextWaveGap <= 175) {
             waveBanner.text = "WAVE COMPLETE";
@@ -942,6 +1168,8 @@ export const addGameManager = () => {
           if (e.nextWaveGap <= -120) {
             waveBanner.close();
             e.currWave++;
+            setData("WAVE", e.currWave);
+            setData("SCORE", e.score);
             waveBanner.text = "WAVE " + e.currWave;
             waveBanner.open();
             e.nextWaveGap = 300;
@@ -956,6 +1184,10 @@ export const addGameManager = () => {
             if (!e.bossSpawed) {
               e.bossSpawnTimer++;
               if (e.bossSpawnTimer === 50) {
+                dm?.say({
+                  who: "witch",
+                  ...getThingToSayOnStart(e.currWave),
+                });
                 e.parts.push(
                   addSnakeBossBodyPart({
                     x: getActualCenter().x - 100,
@@ -983,12 +1215,6 @@ export const addGameManager = () => {
                 e.parts.push(
                   addSnakeBossBodyPart({
                     x: getActualCenter().x - 100,
-                    y: getActualCenter().y + 100,
-                  })
-                );
-                e.parts.push(
-                  addSnakeBossBodyPart({
-                    x: getActualCenter().x,
                     y: getActualCenter().y + 100,
                   })
                 );
@@ -1033,6 +1259,13 @@ export const addGameManager = () => {
               }
 
               if (e.bossSpawnTimer === 500) {
+                dm?.say({
+                  who: "witch",
+                  what: choose([
+                    "his name is WIGGLEBOTTOM JR. be his treat",
+                    "play fetch with WIGGLEBOTTOM JR. haha",
+                  ]),
+                });
                 e.bossSpawed = true;
                 e.fxBg.triggerfx = true;
                 e.parts.forEach((p) => {

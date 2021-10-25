@@ -7,6 +7,8 @@ import {
 } from "../../utils/constants.js";
 import { getHead } from "../head.js";
 
+const isUpperCase = (string) => /^[A-Z]*$/.test(string);
+
 export const addScoreIndicator = ({ x, y }) => {
   let gm = getGameManager();
   let head = null;
@@ -16,7 +18,19 @@ export const addScoreIndicator = ({ x, y }) => {
     origin("right"),
     layer("ui"),
     fixed(),
-    { timer: 0, triggerChange: false, text: "0" },
+    {
+      timer: 0,
+      triggerChange: false,
+      text: gm.score,
+      letters: [
+        { letter: "s", found: false },
+        { letter: "o", found: false },
+        { letter: "r", found: false },
+        { letter: "r", found: false },
+        { letter: "y", found: false },
+      ],
+      word: "",
+    },
     {
       update: (e) => {
         if (e.triggerChange) {
@@ -33,6 +47,19 @@ export const addScoreIndicator = ({ x, y }) => {
         } else {
           e.use(color(255, 255, 255));
         }
+
+        if (gm.currWave === 9 && gm.triggerLetterUpdate) {
+          si.letters.forEach((l) => {
+            if (l.letter === gm.letterToUpdate.toLowerCase() && !l.found) {
+              l.found = true;
+              l.letter = l.letter.toUpperCase();
+              gm.letterToUpdate = "";
+            }
+          });
+          si.word = si.letters.map((l) => l.letter).join("");
+          console.log(si.word);
+          gm.triggerLetterUpdate = false;
+        }
       },
       draw: () => {
         if (!head) {
@@ -40,14 +67,30 @@ export const addScoreIndicator = ({ x, y }) => {
         }
 
         // draw head decoration
-        pushTransform();
-        pushTranslate((roomWidth + uiOffset) / 2, si.pos.y - 3);
-        drawSprite({
-          sprite: "sprHead",
-          origin: "center",
-          color: head.damagesPlayer ? rgb(213, 60, 106) : rgb(255, 255, 255),
-        });
-        popTransform();
+        if (gm.currWave !== 9) {
+          pushTransform();
+          pushTranslate((roomWidth + uiOffset) / 2, si.pos.y - 3);
+          drawSprite({
+            sprite: "sprHead",
+            origin: "center",
+            color: head.damagesPlayer ? rgb(213, 60, 106) : rgb(255, 255, 255),
+          });
+          popTransform();
+        } else {
+          pushTransform();
+          pushTranslate((roomWidth + uiOffset) / 2, si.pos.y - 3);
+          drawText({
+            text: si.word,
+            font: "sinko",
+            origin: "center",
+            transform: (i, c) => {
+              return {
+                opacity: !isUpperCase(c) ? 1 : 0,
+              };
+            },
+          });
+          popTransform();
+        }
 
         // draw combo cooldown bar
         pushTransform();
@@ -80,9 +123,10 @@ export const addScoreIndicator = ({ x, y }) => {
           col = rgb(255, 255, 255);
         }
         drawText({
-          text: gm.playerIsDead
-            ? `${gm.maxCombo}x MAX COMBO`
-            : `${gm.combo}x COMBO`,
+          text:
+            gm.playerIsDead || gm.gameOver
+              ? `${gm.maxCombo}x MAX COMBO`
+              : `${gm.combo}x COMBO`,
           font: "sink",
           size: 8,
           origin: "left",
@@ -131,25 +175,27 @@ export const addScoreIndicator = ({ x, y }) => {
           si.pos.x - roomWidth / 2 - roomWidth / 4 - 5,
           si.pos.y + uiOffset / 4
         );
-        drawRect({
-          width: mapc(gm.bossHealth, 0, bossHealth, 0, roomWidth / 2 + 10),
-          height: 3,
-          origin: "left",
-          color: rgb(213, 60, 106),
-          radius: 1,
-        });
-        drawRect({
-          width: mapc(bossHealth, 0, bossHealth, 0, roomWidth / 2 + 10),
-          height: 3,
-          origin: "left",
-          // color: rgb(213, 60, 106),
-          fill: false,
-          radius: 1,
-          outline: {
-            width: 1,
-            color: rgb(255, 255, 255),
-          },
-        });
+        if (!gm.gameOver && gm.currWave === 9) {
+          drawRect({
+            width: mapc(gm.bossHealth, 0, bossHealth, 0, roomWidth / 2 + 10),
+            height: 3,
+            origin: "left",
+            color: rgb(213, 60, 106),
+            radius: 1,
+          });
+          drawRect({
+            width: mapc(bossHealth, 0, bossHealth, 0, roomWidth / 2 + 10),
+            height: 3,
+            origin: "left",
+            // color: rgb(213, 60, 106),
+            fill: false,
+            radius: 1,
+            outline: {
+              width: 1,
+              color: rgb(255, 255, 255),
+            },
+          });
+        }
         popTransform();
 
         // draw score

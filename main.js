@@ -32,7 +32,7 @@ import { addDialogManager } from "./dialogManager.js";
 // general constants
 let shootRadius = 40;
 let healthBar = [];
-let godMode = true;
+let godMode = false;
 
 // kabooooom!
 initKaboom();
@@ -386,15 +386,28 @@ scene("game", () => {
   });
 
   player.collides("healthPickup", (a) => {
-    healthManager.increaseHealth(1);
-    healthManager.trigger("updateHealthBar");
-    destroy(a);
-    player.hurt();
-    addScoreBubble({
-      x: player.pos.x,
-      y: player.pos.y,
-      amount: "<3",
-    });
+    if (a.is("letterPickup")) {
+      addScoreBubble({
+        x: player.pos.x,
+        y: player.pos.y,
+        amount: a.letter,
+      });
+      gm.letters.push(a.letter);
+      gm.triggerLetterUpdate = true;
+      gm.letterToUpdate = a.letter;
+      player.hurt();
+      destroy(a);
+    } else {
+      healthManager.increaseHealth(1);
+      healthManager.trigger("updateHealthBar");
+      destroy(a);
+      player.hurt();
+      addScoreBubble({
+        x: player.pos.x,
+        y: player.pos.y,
+        amount: "<3",
+      });
+    }
   });
 
   healthManager.on("updateHealthBar", () => {
@@ -431,10 +444,22 @@ scene("game", () => {
       every("enemy", (e) => {
         e.parent.playing = false;
       });
-      gameOverScreen.fadeIn();
+      gameOverScreen.fadeIn(
+        "you are not forgiven",
+        "Press R to restart",
+        false
+      );
     }
   });
   // gameOverScreen.fadeIn();
+
+  gm.on("gameEndScreen", () => {
+    gameOverScreen.fadeIn(
+      "the curse is broken",
+      "Thanks for playing, let me know what you think :)",
+      true
+    );
+  });
 
   // power up charger for kick
   keyDown("z", () => {
